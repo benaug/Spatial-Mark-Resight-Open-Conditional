@@ -89,8 +89,8 @@ NimModel <- nimbleCode({
   }
   
   #Sighting process
-  theta.d.fixed ~ dunif(0,500) #uniformative
-  # theta.d.fixed ~ dgamma(1,0.1) #moderately informative for high to moderate overdispersion
+  # theta.d.fixed ~ dunif(0,500) #uniformative
+  theta.d.fixed ~ dgamma(1,0.1) #moderately informative for high to moderate overdispersion
   for(g in 1:n.sight.years){
     lam0[g] ~ dunif(0,15)
     theta.d[g] <- theta.d.fixed
