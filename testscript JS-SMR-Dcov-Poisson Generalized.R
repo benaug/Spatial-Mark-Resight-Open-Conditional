@@ -142,7 +142,7 @@ table(rtruncpois(10000,lambda=mark.year.pars[1],lower=mark.year.pars[2],upper=ma
 mark.protocol <- 2 
 
 # simulate some data
-set.seed(390297) #change seed for new data set
+set.seed(390298) #change seed for new data set
 data <- sim.JS.SMR.Dcov.Generalized(D.beta0=D.beta0,D.beta1=D.beta1,D.cov=D.cov,
             InSS=InSS,phi=phi,gamma=gamma,n.year=n.year,
             theta.marked=theta.marked,theta.unmarked=theta.unmarked,

@@ -20,3 +20,12 @@ https://github.com/benaug/Spatial-Mark-Resight-Open-Marginal
 
 I would use the marginal version unless there is overdispersion in the resighting counts. The marginal approach mixes better but
 only works with a Poisson observation model.
+
+Note on the negative binomial dispersion parameter: 
+Care is needed for the dispersion parameter, theta.d, prior. It can be weakly identified, particularly without abundant counts, 
+and when not all marked individual samples are identified to individual (theta.marked[1] < 1). Identifiability is improved with 
+telemetry and/or a marking process in generalized SMR. The model files are set up with uninformative priors for theta.d.
+Another option currently commented out is a moderately informative prior for moderate to strong overdispersion. Using a single session
+version in Spatial-Mark-Resight-Conditional, this prior worked well in one simulation scenario with negative binomial data
+and did not produce bias in another simulation scenario where I simulated Poisson (theta.d very large) data. 
+So, it did not appear very influential, but it could be with very sparse data.

@@ -143,7 +143,7 @@ table(rtruncpois(10000,lambda=mark.year.pars[1],lower=mark.year.pars[2],upper=ma
 mark.protocol <- 2 
 
 # simulate some data
-set.seed(390297) #change seed for new data set
+set.seed(390298) #change seed for new data set
 data <- sim.JS.SMR.Dcov.Generalized(D.beta0=D.beta0,D.beta1=D.beta1,D.cov=D.cov,
             InSS=InSS,phi=phi,gamma=gamma,n.year=n.year,
             theta.marked=theta.marked,theta.unmarked=theta.unmarked,
@@ -243,7 +243,7 @@ mask.check(dSS=data$dSS,cells=data$cells,n.cells=data$n.cells,n.cells.x=data$n.c
 ##Initialize##
 data$N[1] + sum(data$N.recruit) #true N.super
 
-M <- 250 #data augmentation level.
+M <- 300 #data augmentation level.
 
 #initialize N and z objects and activity centers
 if(M < (data$n.marked.all)+1) stop("M must be larger than the number of marked individuals plus at least one unmarked individual.")
@@ -442,7 +442,7 @@ Cmcmc <- compileNimble(Rmcmc,project=Rmodel)
 
 # Run the model.
 start.time2 <- Sys.time()
-Cmcmc$run(1000,reset=FALSE) #can extend run by rerunning this line
+Cmcmc$run(2500,reset=FALSE) #can extend run by rerunning this line
 end.time <- Sys.time()
 time1 <- end.time-start.time  # total time for compilation, replacing samplers, and fitting
 time2 <- end.time-start.time2 # post-compilation run time
