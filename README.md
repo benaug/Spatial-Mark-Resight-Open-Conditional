@@ -22,7 +22,10 @@ I would use the marginal version unless there is overdispersion in the resightin
 only works with a Poisson observation model. The mixing for the conditional version can be what you might call "terrible" in many
 scenarios, so it may or may not be workable for any given data set, particularly when there is more posterior uncertainty.
 
-Note on the negative binomial dispersion parameter: 
+There are 4 model versions--Poisson and negative binomial observation models and versions with and without interspersed
+marking and sighting within years.
+
+Notes on the negative binomial dispersion parameter: 
 Care is needed for the dispersion parameter, theta.d, prior. It can be weakly identified, particularly without abundant counts, 
 and when not all marked individual samples are identified to individual (theta.marked[1] < 1). Identifiability is improved with 
 telemetry and/or a marking process in generalized SMR. The NB model files are set up with moderately informative priors for moderate 
