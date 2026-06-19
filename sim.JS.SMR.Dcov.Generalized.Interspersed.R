@@ -12,7 +12,7 @@ rtruncpois <- function(n,lambda,lower=0,upper=Inf){
 }
 
 sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
-                            phi=NA,gamma=NA,n.year=NA,K.order=NA,
+                            phi=NA,gamma=NA,n.primary=NA,K.order=NA,
                             theta.marked=NA,theta.unmarked=NA,
                             K.mark=NA,K.sight=NA,K1D.mark=NA,K2D.sight=NA,
                             p0=NA,lam0=NA,sigma=NA,theta.d=NA,obsmod="poisson",
@@ -25,11 +25,11 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   if(is.na(K.order[1])){
     stop("Must supply K.order")
   }
-  if(length(K.order)!=n.year)stop("K.order must be of length N.session")
+  if(length(K.order)!=n.primary)stop("K.order must be of length N.session")
   if(!all(c("M","S")%in%names(table(unlist(K.order))))|!all(names(table(unlist(K.order)))%in%c("M","S"))){
     stop("K.order must only contain characters 'M'and 'S' indicating marking and sighting sessions")
   }
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     if(K.sight[g]>0){
       if(length(K.order[[g]])!=sum(K.mark[g],K.sight[g])){
         stop(paste("K.order is not the right size in session",g))
@@ -42,8 +42,8 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
     }
   }
   
-  J.mark <- J.sight <- rep(NA,n.year)
-  for(g in 1:n.year){
+  J.mark <- J.sight <- rep(NA,n.primary)
+  for(g in 1:n.primary){
     X.mark[[g]] <- as.matrix(X.mark[[g]])
     X.sight[[g]] <- as.matrix(X.sight[[g]])
     J.mark[g] <- nrow(X.mark[[g]])
@@ -52,8 +52,8 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   
   #trap operation - marking process
   if(!any(is.na(K1D.mark))){
-    if(length(K1D.mark)!=n.year)stop("K1D.mark must be a list of length n.year")
-    for(g in 1:n.year){
+    if(length(K1D.mark)!=n.primary)stop("K1D.mark must be a list of length n.primary")
+    for(g in 1:n.primary){
       if(any(K1D.mark[[g]]>K.mark[g])){
         stop("Some entries in K1D.mark[[g]] are greater than K.mark[g].")
       }
@@ -63,16 +63,16 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
     }
   }else{
     print("K1D.mark not provided, assuming trap operation is perfect.")
-    K1D.mark <- vector("list",n.year)
-    for(g in 1:n.year){
+    K1D.mark <- vector("list",n.primary)
+    for(g in 1:n.primary){
       K1D.mark[[g]] <- rep(K.mark[g],J.mark[g])
     }
   }
   
   #trap operation - sighting process
   if(!any(is.na(K2D.sight))){
-    if(length(K2D.sight)!=n.year) stop("K2D.sight must be a list of length n.year")
-    for(g in 1:n.year){
+    if(length(K2D.sight)!=n.primary) stop("K2D.sight must be a list of length n.primary")
+    for(g in 1:n.primary){
       if(!is.matrix(K2D.sight[[g]])) stop("K2D.sight[[g]] must be a matrix.")
       if(any(K2D.sight[[g]]>1)) stop("Entries in K2D.sight[[g]] must be 0/1 indicators, not counts greater than 1.")
       if(any(K2D.sight[[g]]<0)) stop("Entries in K2D.sight[[g]] must be 0/1 indicators.")
@@ -82,15 +82,15 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
     }
   }else{
     print("K2D.sight not provided, assuming trap operation is perfect.")
-    K2D.sight <- vector("list",n.year)
-    for(g in 1:n.year){
+    K2D.sight <- vector("list",n.primary)
+    for(g in 1:n.primary){
       K2D.sight[[g]] <- matrix(1,J.sight[g],K.sight[g])
     }
   }
   
   #Population dynamics
-  N <- rep(NA,n.year)
-  N.recruit <- N.survive <- ER <- rep(NA,n.year-1)
+  N <- rep(NA,n.primary)
+  N.recruit <- N.survive <- ER <- rep(NA,n.primary-1)
   #get expected N in year 1 from D.cov parameters
   cellArea <- res^2
   lambda.cell <- InSS*exp(D.beta0 + D.beta1*D.cov)*cellArea
@@ -107,16 +107,16 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   n.cells.y <- length(y.vals)
 
   #Easiest to increase dimension of z as we simulate bc size not known in advance.
-  z <- matrix(0,N[1],n.year)
+  z <- matrix(0,N[1],n.primary)
   z[1:N[1],1] <- 1
-  for(g in 2:n.year){
+  for(g in 2:n.primary){
     #Simulate recruits
     ER[g-1] <- N[g-1]*gamma[g-1]
     N.recruit[g-1] <- rpois(1,ER[g-1])
     if(N.recruit[g-1]>0){
       #add recruits to z
       z.dim.old <- nrow(z)
-      z <- rbind(z,matrix(0,nrow=N.recruit[g-1],ncol=n.year))
+      z <- rbind(z,matrix(0,nrow=N.recruit[g-1],ncol=n.primary))
       z[(z.dim.old+1):(z.dim.old+N.recruit[g-1]),g] <- 1
     }
     #Simulate survival
@@ -126,11 +126,11 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
     N[g] <- N.recruit[g-1]+N.survive[g-1]
   }
 
-  if(any(N.recruit+N.survive!=N[2:n.year]))stop("Simulation bug")
+  if(any(N.recruit+N.survive!=N[2:n.primary]))stop("Simulation bug")
   if(any(colSums(z)!=N))stop("Simulation bug")
 
   z.start <- apply(z,1,function(x){which(x==1)[1]})
-  z.stop <- n.year-apply(z,1,function(x){which(rev(x)==1)[1]})+1
+  z.stop <- n.primary-apply(z,1,function(x){which(rev(x)==1)[1]})+1
   
   
   #detection
@@ -154,10 +154,10 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   }
   
   #Capture and mark individuals
-  pd <- array(0,dim=c(N.super,n.year,J.mark.max))
-  y.mark <- array(0,dim=c(N.super,n.year,J.mark.max,K.mark.max))
+  pd <- array(0,dim=c(N.super,n.primary,J.mark.max))
+  y.mark <- array(0,dim=c(N.super,n.primary,J.mark.max,K.mark.max))
   
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     if(K.mark[g]>0){
       D.mark <- e2dist(s,X.mark[[g]])
       pd[,g,1:J.mark[g]] <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
@@ -174,17 +174,17 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   }
   
   #resight individuals
-  lamd <- array(0,dim=c(N.super,n.year,J.sight.max))
-  y <- array(0,dim=c(N.super,n.year,J.sight.max,K.sight.max))
+  lamd <- array(0,dim=c(N.super,n.primary,J.sight.max))
+  y <- array(0,dim=c(N.super,n.primary,J.sight.max,K.sight.max))
   
   if(!(obsmod %in% c("poisson","negbin"))) stop("obsmod must be 'poisson' or 'negbin'.")
   if(obsmod=="negbin"){
     if(any(is.na(theta.d))) stop("Must provide theta.d for negbin obsmod.")
-    if(length(theta.d)==1) theta.d <- rep(theta.d,n.year)
-    if(length(theta.d)!=n.year) stop("theta.d must have length 1 or n.year for negbin obsmod.")
+    if(length(theta.d)==1) theta.d <- rep(theta.d,n.primary)
+    if(length(theta.d)!=n.primary) stop("theta.d must have length 1 or n.primary for negbin obsmod.")
   }
   
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     if(K.sight[g]>0){
       D <- e2dist(s,X.sight[[g]])
       lamd[,g,1:J.sight[g]] <- lam0[g]*exp(-D*D/(2*sigma[g]*sigma[g]))
@@ -216,13 +216,13 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   mark.caps <- 1*apply(y.mark,c(1,2),sum)
   ID.cap.all <- sort(unique(which(rowSums(mark.caps)>0)))
   n.cap.all <- length(ID.cap.all)
-  mark.deploy <- matrix(0,N.super,n.year) #actual marks deployed only
+  mark.deploy <- matrix(0,N.super,n.primary) #actual marks deployed only
   mark.states2D <- z*0 #0: unmarked, 1: marked
   tel.z.states <- z*NA
   #observed data, not true states (because we don't know if dead)
-  eligible.states <- matrix(1,N.super,n.year) #eligible based on mark.states collaring history, may be dead and eligible
-  mark.start.global <- matrix(NA,N.super,n.year) #0 means carried into year; positive values are global K.order occasions
-  for(g in 1:n.year){
+  eligible.states <- matrix(1,N.super,n.primary) #eligible based on mark.states collaring history, may be dead and eligible
+  mark.start.global <- matrix(NA,N.super,n.primary) #0 means carried into year; positive values are global K.order occasions
+  for(g in 1:n.primary){
     cap.g <- which(mark.caps[,g]>0&eligible.states[,g]==1)
     if(length(cap.g)>0){
       deploy.g <- rbinom(length(cap.g),1,p.mark[g])
@@ -231,7 +231,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
       if(length(mark.g)>0){
         for(i in mark.g){
           mark.life <- rtruncpois(1,lambda=mark.year.pars[1],lower=mark.year.pars[2],upper=mark.year.pars[3])
-          end.year <- min(g+mark.life-1,n.year)
+          end.year <- min(g+mark.life-1,n.primary)
           y.mark.i.g <- apply(y.mark[i,g,,1:K.mark[g],drop=FALSE],4,sum)
           first.mark.k <- which(y.mark.i.g>0)[1]
           first.global.k <- which(K.order[[g]]=="M")[first.mark.k]
@@ -242,7 +242,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
             mark.start.global[i,(g+1):end.year] <- 0
           }
           if(mark.life>1&mark.protocol==1){ #if we don't replace marks on capture, make ineligible
-            if(g<n.year){
+            if(g<n.primary){
               eligible.states[i,(g+1):end.year] <- 0
             }
           }
@@ -256,29 +256,29 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   tel.z.states[which(tel.z.states==1&z==0)] <- 0
   mark.states2D[which(mark.states2D==1&z==0)] <- 0
   mark.start.global[which(mark.states2D==0)] <- NA
-  ID.marked <- vector("list",n.year)
-  for(g in 1:n.year){
+  ID.marked <- vector("list",n.primary)
+  for(g in 1:n.primary){
     ID.marked[[g]] <- which(mark.states2D[,g]==1)
   }
   #if you observe a death, fill in 0s to the end
   for(i in 1:N.super){
     idx <- which(tel.z.states[i,]==0)
     if(length(idx)>0){
-      tel.z.states[i,max(idx):n.year] <- 0
+      tel.z.states[i,max(idx):n.primary] <- 0
     }
   }
   ID.marked.all <- sort(unique(unlist(ID.marked)))
   n.marked.all <- length(ID.marked.all)
   n.marked <- sapply(ID.marked,length)
   
-  sightocc <- vector("list",n.year)
-  for(g in 1:n.year){
+  sightocc <- vector("list",n.primary)
+  for(g in 1:n.primary){
     sightocc[[g]] <- which(K.order[[g]]=="S")
   }
   
-  mark.states <- array(0,dim=c(N.super,n.year,K.sight.max))
+  mark.states <- array(0,dim=c(N.super,n.primary,K.sight.max))
   for(i in 1:N.super){
-    for(g in 1:n.year){
+    for(g in 1:n.primary){
       if(z[i,g]==1&mark.states2D[i,g]==1&!is.na(mark.start.global[i,g])){
         for(k in 1:K.sight[g]){
           if(mark.start.global[i,g]==0||sightocc[[g]][k]>mark.start.global[i,g]){
@@ -290,11 +290,11 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   }
   
   #sighting event process
-  y.event <- array(0,dim=c(N.super,n.year,J.sight.max,K.sight.max,3))
-  y.mID <- array(0,dim=c(n.marked.all,n.year,J.sight.max,K.sight.max))
-  y.mnoID <- y.um <- y.unk <- array(0,dim=c(n.year,J.sight.max,K.sight.max))
+  y.event <- array(0,dim=c(N.super,n.primary,J.sight.max,K.sight.max,3))
+  y.mID <- array(0,dim=c(n.marked.all,n.primary,J.sight.max,K.sight.max))
+  y.mnoID <- y.um <- y.unk <- array(0,dim=c(n.primary,J.sight.max,K.sight.max))
   
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     if(K.sight[g]>0){
       idx <- which(y[,g,,]>0,arr.ind=TRUE)
       if(nrow(idx)>0){
@@ -364,8 +364,8 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
     n.locs.ind <- NA
     n.tel.years <- NA
   }
-  tel.ID.g <- vector("list",n.year)
-  for(g in 1:n.year){
+  tel.ID.g <- vector("list",n.primary)
+  for(g in 1:n.primary){
     collared.g <- which(tel.z.states[,g]==1)
     if(length(collared.g)>0){
       tel.ID.g[[g]] <- collared.g
@@ -377,7 +377,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   #   n.tel.years <- rowSums(tel.z.states==1,na.rm=TRUE)
   #   n.tel.years <- n.tel.years[ID.marked.all]
   #   n.tel.inds <- sum(n.tel.years>0)
-  #   tel.year <- matrix(NA,n.tel.inds,n.year)
+  #   tel.year <- matrix(NA,n.tel.inds,n.primary)
   #   max.n.tel.years <- max(n.tel.years)
   #   locs <- array(NA,dim=c(n.tel.inds,max.n.tel.years,n.tel.locs,2))
   #   for(i in 1:n.tel.inds){
@@ -424,11 +424,11 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   truth$y.mark <- y.mark
   
   #reorder marked guys
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     ID.marked[[g]] <- which(mark.states2D[,g]==1)
   }
   tel.ID <- match(tel.ID,ID.marked.all)
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     if(length(tel.ID.g[[g]])>0){
       tel.ID.g[[g]] <- match(tel.ID.g[[g]],ID.marked.all)
     }
@@ -442,13 +442,13 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   ID.cap.all <- 1:n.cap.all
   mark.caps <- mark.caps[1:n.cap.all,,drop=FALSE]
   mark.deploy <- mark.deploy[1:n.cap.all,,drop=FALSE]
-  n.cap <- rep(0,n.year)
-  for(g in 1:n.year){
+  n.cap <- rep(0,n.primary)
+  for(g in 1:n.primary){
     n.cap[g] <- sum(apply(y[,g,,,drop=FALSE],1,sum)>0)
   }
   
   return(list(y.mark=y.mark,y.mID=y.mID,y.mnoID=y.mnoID,y.um=y.um,y.unk=y.unk, #observed data
-              n.year=n.year,n.marked=n.marked,n.marked.all=n.marked.all,
+              n.primary=n.primary,n.marked=n.marked,n.marked.all=n.marked.all,
               ID.cap.all=ID.cap.all,n.cap.all=n.cap.all,n.cap=n.cap,
               mark.deploy=mark.deploy,mark.caps=mark.caps,
               locs=locs,n.tel.inds=n.tel.inds,n.tel.years=n.tel.years,tel.year=tel.year,

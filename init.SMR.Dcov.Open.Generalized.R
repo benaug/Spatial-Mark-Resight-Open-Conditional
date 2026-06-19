@@ -11,13 +11,13 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   n.marked <- data$n.marked
   n.marked.all <- data$n.marked.all
   n.cap.all <- data$n.cap.all
-  n.year <- data$n.year
+  n.primary <- data$n.primary
   
-  mark.states <- matrix(0,M,n.year)
+  mark.states <- matrix(0,M,n.primary)
   mark.states[1:n.marked.all,] <- data$mark.states
   
   #augment tel.z.states, code NA as 2
-  tel.z.states <- matrix(2,M,n.year)
+  tel.z.states <- matrix(2,M,n.primary)
   tel.z.states[1:n.marked.all,] <- data$tel.z.states
   tel.z.states[is.na(tel.z.states)] <- 2
   
@@ -32,7 +32,7 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   locs <- data$locs
   
   #augment marking data and pull out sighting data
-  y.mark <- array(0,dim=c(M,n.year,J.mark.max))
+  y.mark <- array(0,dim=c(M,n.primary,J.mark.max))
   y.mark[1:n.cap.all,,] <- data$y.mark
   y.mID <- data$y.mID
   y.mnoID <- data$y.mnoID
@@ -40,13 +40,13 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   y.unk <- data$y.unk
   
   #reformat trap/effort arrays
-  ID.marked <- matrix(0,max(n.marked),n.year)
-  X.mark <- array(0,dim=c(n.year,J.mark.max,2))
-  K1D.mark <- matrix(0,n.year,J.mark.max)
-  X.sight <- array(0,dim=c(n.year,J.sight.max,2))
-  K1D.sight <- matrix(0,n.year,J.sight.max)
+  ID.marked <- matrix(0,max(n.marked),n.primary)
+  X.mark <- array(0,dim=c(n.primary,J.mark.max,2))
+  K1D.mark <- matrix(0,n.primary,J.mark.max)
+  X.sight <- array(0,dim=c(n.primary,J.sight.max,2))
+  K1D.sight <- matrix(0,n.primary,J.sight.max)
   
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     if(n.marked[g]>0){
       ID.marked[1:n.marked[g],g] <- data$ID.marked[[g]]
     }
@@ -66,7 +66,7 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   if(!(obsmod %in% c("poisson","negbin"))) stop("obsmod must be 'poisson' or 'negbin'.")
   if(obsmod=="negbin"){
     theta.d <- inits$theta.d
-    if(length(theta.d)!=n.year) stop("inits$theta.d must have length n.year for obsmod='negbin'.")
+    if(length(theta.d)!=n.primary) stop("inits$theta.d must have length n.primary for obsmod='negbin'.")
   }
   
   #assign random locations to assign latent ID samples to individuals
@@ -81,7 +81,7 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   
   for(i in idx){
     trps <- matrix(0,nrow=0,ncol=2)
-    for(g in 1:n.year){
+    for(g in 1:n.primary){
       if(sum(y.mark[i,g,])>0){
         trps.g <- matrix(X.mark[g,which(y.mark[i,g,]>0),,drop=FALSE],ncol=2,byrow=FALSE)
         trps <- rbind(trps,trps.g)
@@ -119,14 +119,14 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   s.init[,2][s.init[,2]>ylim[2]] <- ylim[2]-eps
   
   #build conditional sighting histories
-  y.sight <- array(0,dim=c(M,n.year,J.sight.max))
-  y.event <- array(0,dim=c(M,n.year,J.sight.max,3))
+  y.sight <- array(0,dim=c(M,n.primary,J.sight.max))
+  y.event <- array(0,dim=c(M,n.primary,J.sight.max,3))
   
   #known marked-ID sightings are category 1
   y.sight[1:n.marked.all,,] <- y.mID
   y.event[1:n.marked.all,,,1] <- y.mID
   
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     D.sight <- e2dist(s.init,X.sight[g,1:J.sight[g],1:2])
     lamd <- lam0[g]*exp(-D.sight*D.sight/(2*sigma[g]*sigma[g]))
     for(j in 1:J.sight[g]){
@@ -168,7 +168,7 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   #update ACs using all assigned marking + sighting detections
   for(i in 1:M){
     trps <- matrix(0,nrow=0,ncol=2)
-    for(g in 1:n.year){
+    for(g in 1:n.primary){
       if(sum(y.mark[i,g,])>0){
         trps.g <- matrix(X.mark[g,which(y.mark[i,g,]>0),,drop=FALSE],ncol=2,byrow=FALSE)
         trps <- rbind(trps,trps.g)
@@ -203,18 +203,18 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   }
   
   #construct ID/event lists from y.event
-  n.samples <- rep(0,n.year)
-  for(g in 1:n.year){
+  n.samples <- rep(0,n.primary)
+  for(g in 1:n.primary){
     n.samples[g] <- sum(y.mnoID[g,1:J.sight[g]]) + sum(y.um[g,1:J.sight[g]]) + sum(y.unk[g,1:J.sight[g]])
   }
   n.samples.max <- max(n.samples)
   
-  ID <- matrix(1,nrow=n.year,ncol=n.samples.max)
-  this.j <- matrix(0,nrow=n.year,ncol=n.samples.max)
-  event.type <- matrix(0,nrow=n.year,ncol=n.samples.max)
-  match <- array(FALSE,dim=c(n.year,n.samples.max,M))
+  ID <- matrix(1,nrow=n.primary,ncol=n.samples.max)
+  this.j <- matrix(0,nrow=n.primary,ncol=n.samples.max)
+  event.type <- matrix(0,nrow=n.primary,ncol=n.samples.max)
+  match <- array(FALSE,dim=c(n.primary,n.samples.max,M))
   
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     if(n.samples[g]>0){
       idx.samp <- 1
       #marked no-ID samples: category 2, only currently marked individuals are valid matches
@@ -269,20 +269,20 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   }
   
   #baseline capcounts from known marked-ID category-1 detections
-  capcounts.ID <- matrix(0,n.year,M)
-  for(g in 1:n.year){
+  capcounts.ID <- matrix(0,n.primary,M)
+  for(g in 1:n.primary){
     for(i in 1:n.marked.all){
       capcounts.ID[g,i] <- sum(y.event[i,g,1:J.sight[g],1])
     }
   }
   
   #initialize z, start with observed/allocated guys
-  z.init <- matrix(0,M,n.year)
+  z.init <- matrix(0,M,n.primary)
   z.start.init <- z.stop.init <- rep(0,M)
 
   #get y2D constraints for z.start and z.stop update
   y.mark2D <- apply(y.mark,c(1,2),sum)
-  y.mID2D <- matrix(0,M,n.year)
+  y.mID2D <- matrix(0,M,n.primary)
   y.mID2D[1:n.marked.all,] <- apply(y.mID,c(1,2),sum)
   y2D <- y.mark2D + y.mID2D
   #add telemetry states - using these instead of marked states since you can be marked and dead (how you observe telemetry death)
@@ -312,14 +312,14 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   
   #initialize N structures from z.init
   N.init <- colSums(z.init[z.super.init==1,,drop=FALSE])
-  N.survive.init <- N.recruit.init <- rep(NA,n.year-1)
-  for(g in 2:n.year){
+  N.survive.init <- N.recruit.init <- rep(NA,n.primary-1)
+  for(g in 2:n.primary){
     N.survive.init[g-1] <- sum(z.init[,g-1]==1 & z.init[,g]==1 & z.super.init==1)
     N.recruit.init[g-1] <- N.init[g] - N.survive.init[g-1]
   }
   
   #basic starting likelihood checks
-  for(g in 1:n.year){
+  for(g in 1:n.primary){
     D.mark <- e2dist(s.init,X.mark[g,1:J.mark[g],1:2])
     pd <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
     logProb <- array(0,dim=c(M,J.mark[g]))

@@ -10,7 +10,7 @@ sSamplerDcov <- nimbleFunction(
     ylim <- control$ylim
     n.cells.x <- control$n.cells.x
     n.cells.y <- control$n.cells.y
-    n.year <- control$n.year
+    n.primary <- control$n.primary
     ## control list extraction
     # logScale            <- extractControlElement(control, 'log',                 FALSE)
     # reflective          <- extractControlElement(control, 'reflective',          FALSE)
@@ -29,10 +29,10 @@ sSamplerDcov <- nimbleFunction(
     if(length(loc.nodes)>0){
       s.nodes <- c(s.nodes,loc.nodes)
     }
-    pd.nodes <- model$expandNodeNames(paste("pd[",i,",1:",n.year,",1:",max(J.mark),"]"))
-    y.mark.nodes <- model$expandNodeNames(paste("y.mark[",i,",1:",n.year,",1:",max(J.mark),"]"))
-    lam.nodes <- model$expandNodeNames(paste("lam[",i,",1:",n.year,",1:",max(J.sight),"]"))
-    y.sight.nodes <- model$expandNodeNames(paste("y.sight[",i,",1:",n.year,",1:",max(J.sight),"]"))
+    pd.nodes <- model$expandNodeNames(paste("pd[",i,",1:",n.primary,",1:",max(J.mark),"]"))
+    y.mark.nodes <- model$expandNodeNames(paste("y.mark[",i,",1:",n.primary,",1:",max(J.mark),"]"))
+    lam.nodes <- model$expandNodeNames(paste("lam[",i,",1:",n.primary,",1:",max(J.sight),"]"))
+    y.sight.nodes <- model$expandNodeNames(paste("y.sight[",i,",1:",n.primary,",1:",max(J.sight),"]"))
     
     # calcNodesNoSelf <- model$getDependencies(target, self = FALSE)
     # isStochCalcNodesNoSelf <- model$isStoch(calcNodesNoSelf)   ## should be made faster
