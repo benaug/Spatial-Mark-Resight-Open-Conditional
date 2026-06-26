@@ -22,8 +22,10 @@ I would use the marginal version unless there is overdispersion in the resightin
 only works with a Poisson observation model. The mixing for the conditional version can be what you might call "terrible" in many
 scenarios, so it may or may not be workable for any given data set, particularly when there is more posterior uncertainty.
 
-There are 4 model versions--Poisson and negative binomial observation models and versions with and without interspersed
-marking and sighting within years.
+There are 4 model versions with stationary activity centers--Poisson and negative binomial observation models and versions with and without interspersed
+marking and sighting within years. There are 2 versions with RSF-based mobile activity centers--Poisson and negative binomial
+observation models without interspersed marking and sighting. Mobile activity center test scripts are set up with abundant marked 
+individuals with telemetry data, which is likely required for acceptable mixing.
 
 Notes on the negative binomial dispersion parameter: 
 Care is needed for the dispersion parameter, theta.d, prior. It can be weakly identified, particularly without abundant counts, 
