@@ -170,7 +170,6 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
       }
     }
   }
-  
   if(sum(y)==0)stop("No individuals resighted. Reconsider parameter settings.")
 
   #store true data for debugging
