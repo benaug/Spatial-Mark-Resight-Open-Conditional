@@ -135,15 +135,16 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   #Capture and mark individuals
   y.mark <- pd <- array(0,dim=c(N.super,n.primary,J.mark.max))
   for(g in 1:n.primary){
-    D.mark <- e2dist(s,X.mark[[g]])
-    pd[,g,1:J.mark[g]] <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
-    for(i in 1:N.super){
-      if(z[i,g]==1){
-        y.mark[i,g,1:J.mark[g]] <- rbinom(J.mark[g],size=K1D.mark[[g]],prob=pd[i,g,1:J.mark[g]])
+    if(J.mark[g]>0){
+      D.mark <- e2dist(s,X.mark[[g]])
+      pd[,g,1:J.mark[g]] <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
+      for(i in 1:N.super){
+        if(z[i,g]==1){
+          y.mark[i,g,1:J.mark[g]] <- rbinom(J.mark[g],size=K1D.mark[[g]],prob=pd[i,g,1:J.mark[g]])
+        }
       }
     }
   }
-  
   #resight individuals
   lamd <- y <- array(0,dim=c(N.super,n.primary,J.sight.max))
   if(obsmod=="negbin"){
@@ -151,16 +152,18 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   }
   if(!(obsmod %in% c("poisson","negbin"))) stop("obsmod must be 'poisson' or 'negbin'.")
   for(g in 1:n.primary){
-    D <- e2dist(s,X.sight[[g]])
-    lamd[,g,1:J.sight[g]] <- lam0[g]*exp(-D*D/(2*sigma[g]*sigma[g]))
-    for(i in 1:N.super){
-      if(z[i,g]==1){
-        if(obsmod=="poisson"){
-          y[i,g,1:J.sight[g]] <- rpois(J.sight[g],K1D.sight[[g]]*lamd[i,g,1:J.sight[g]])
-        }else if(obsmod=="negbin"){
-          for(j in 1:J.sight[g]){
-            if(K1D.sight[[g]][j] > 0){
-              y[i,g,j] <- rnbinom(1,mu=K1D.sight[[g]][j]*lamd[i,g,j],size=theta.d[g]*K1D.sight[[g]][j])
+    if(J.sight[g]>0){
+      D <- e2dist(s,X.sight[[g]])
+      lamd[,g,1:J.sight[g]] <- lam0[g]*exp(-D*D/(2*sigma[g]*sigma[g]))
+      for(i in 1:N.super){
+        if(z[i,g]==1){
+          if(obsmod=="poisson"){
+            y[i,g,1:J.sight[g]] <- rpois(J.sight[g],K1D.sight[[g]]*lamd[i,g,1:J.sight[g]])
+          }else if(obsmod=="negbin"){
+            for(j in 1:J.sight[g]){
+              if(K1D.sight[[g]][j] > 0){
+                y[i,g,j] <- rnbinom(1,mu=K1D.sight[[g]][j]*lamd[i,g,j],size=theta.d[g]*K1D.sight[[g]][j])
+              }
             }
           }
         }
@@ -230,7 +233,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   y.mnoID <- y.um <- y.unk <- matrix(0,n.primary,J.sight.max)
   
   for(g in 1:n.primary){
-    if(K.sight[g]>0){ #skip if no effort in this year
+    if(J.sight[g]>0){ #skip if no effort in this year
       #loop over cells with positive counts
       idx <- which(y[,g,]>0,arr.ind=TRUE)
       for(l in 1:nrow(idx)){
@@ -302,44 +305,11 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
     }
   }
   
-  #simulate telemetry locations
-  # if(n.tel.locs>0&sum(y.mark)>0){
-  #   n.tel.sessions <- rowSums(tel.z.states==1,na.rm=TRUE)
-  #   n.tel.sessions <- n.tel.sessions[ID.marked.all]
-  #   n.tel.inds <- sum(n.tel.sessions>0)
-  #   tel.session <- matrix(NA,n.tel.inds,n.primary)
-  #   max.n.tel.sessions <- max(n.tel.sessions)
-  #   locs <- array(NA,dim=c(n.tel.inds,max.n.tel.sessions,n.tel.locs,2))
-  #   for(i in 1:n.tel.inds){
-  #     tel.session[i,1:n.tel.sessions[i]] <- which(tel.z.states[ID.marked.all[i],]==1)
-  #     for(g in 1:n.tel.sessions[i]){
-  #       #if adding movement, reference correct s years
-  #       locs[i,g,,] <- c(rnorm(n.tel.locs,s[ID.marked.all[i],1],sigma[tel.session[i,g]]),
-  #                        rnorm(n.tel.locs,s[ID.marked.all[i],2],sigma[tel.session[i,g]]))
-  #     }
-  #   }
-  #   n.locs.ind <- apply(!is.na(locs[,,,1]),c(1,2),sum)
-  #   if(dim(locs)[2]==1){
-  #     n.locs.ind <- matrix(rowSums(n.locs.ind),ncol=1)
-  #   }
-  # }else{
-  #   print("no individuals captured, no telemetry")
-  #   locs <- tel.session <- NA
-  #   n.tel.inds <- 0
-  #   n.tel.sessions <- NA
-  #   n.locs.ind <- NA
-  # }
-  
   mark.states <- mark.states[ID.marked.all,]
   tel.z.states <- tel.z.states[ID.marked.all,]
   
   #renumber ID.marked and ID.marked.all in new order after discarding unmarked guys in numbering
   #reorder y, z, s first
-  # ID.unmarked.all <- setdiff(1:N.super,ID.marked.all)
-  # s <- s[c(ID.marked.all,ID.unmarked.all),]
-  # z <- z[c(ID.marked.all,ID.unmarked.all),]
-  # y.mark <- y.mark[c(ID.marked.all,ID.unmarked.all),,]
-  # y <- y[c(ID.marked.all,ID.unmarked.all),,]
   ID.cap.unmarked.all <- setdiff(ID.cap.all,ID.marked.all)
   ID.unobserved.all <- setdiff(1:N.super,c(ID.marked.all,ID.cap.unmarked.all))
   ID.order <- c(ID.marked.all,ID.cap.unmarked.all,ID.unobserved.all)

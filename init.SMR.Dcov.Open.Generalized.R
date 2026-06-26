@@ -50,10 +50,14 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
     if(n.marked[g]>0){
       ID.marked[1:n.marked[g],g] <- data$ID.marked[[g]]
     }
-    X.mark[g,1:J.mark[g],1:2] <- data$X.mark[[g]]
-    K1D.mark[g,1:J.mark[g]] <- data$K1D.mark[[g]]
-    X.sight[g,1:J.sight[g],1:2] <- data$X.sight[[g]]
-    K1D.sight[g,1:J.sight[g]] <- data$K1D.sight[[g]]
+    if(J.mark[g]>0){
+      X.mark[g,1:J.mark[g],1:2] <- data$X.mark[[g]]
+      K1D.mark[g,1:J.mark[g]] <- data$K1D.mark[[g]]
+    }
+    if(J.sight[g]>0){
+      X.sight[g,1:J.sight[g],1:2] <- data$X.sight[[g]]
+      K1D.sight[g,1:J.sight[g]] <- data$K1D.sight[[g]]
+    }
   }
   
   xlim <- data$xlim
@@ -78,7 +82,6 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   has.mID[1:n.marked.all] <- rowSums(y.mID)>0
   has.tel <- (1:n.cap.all)%in%data$tel.ID
   idx <- which(has.mark|has.mID|has.tel)
-  
   for(i in idx){
     trps <- matrix(0,nrow=0,ncol=2)
     for(g in 1:n.primary){
@@ -127,40 +130,42 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   y.event[1:n.marked.all,,,1] <- y.mID
   
   for(g in 1:n.primary){
-    D.sight <- e2dist(s.init,X.sight[g,1:J.sight[g],1:2])
-    lamd <- lam0[g]*exp(-D.sight*D.sight/(2*sigma[g]*sigma[g]))
-    for(j in 1:J.sight[g]){
-      #marked, no-ID detections: category 2, only currently marked individuals
-      if(y.mnoID[g,j]>0){
-        marked.inds <- which(mark.states[,g]==1 & tel.z.states[,g]!=0)
-        prob <- lamd[marked.inds,j]
-        if(sum(prob)<=0) stop(paste("No valid marked candidates for marked-no-ID sightings in year",g,"trap",j))
-        prob <- prob/sum(prob)
-        add <- as.numeric(rmultinom(1,y.mnoID[g,j],prob=prob))
-        y.sight[marked.inds,g,j] <- y.sight[marked.inds,g,j] + add
-        y.event[marked.inds,g,j,2] <- y.event[marked.inds,g,j,2] + add
-      }
-      
-      #unmarked detections: category 2, only currently unmarked individuals
-      if(y.um[g,j]>0){
-        unmarked.inds <- which(mark.states[,g]==0 & tel.z.states[,g]!=0)
-        prob <- lamd[unmarked.inds,j]
-        if(sum(prob)<=0) stop(paste("No valid unmarked candidates for unmarked sightings in year",g,"trap",j))
-        prob <- prob/sum(prob)
-        add <- as.numeric(rmultinom(1,y.um[g,j],prob=prob))
-        y.sight[unmarked.inds,g,j] <- y.sight[unmarked.inds,g,j] + add
-        y.event[unmarked.inds,g,j,2] <- y.event[unmarked.inds,g,j,2] + add
-      }
-      
-      #unknown marked-status detections: category 3, any not-known-dead individual
-      if(y.unk[g,j]>0){
-        avail.inds <- which(tel.z.states[,g]!=0)
-        prob <- lamd[avail.inds,j]
-        if(sum(prob)<=0) stop(paste("No valid candidates for unknown-status sightings in year",g,"trap",j))
-        prob <- prob/sum(prob)
-        add <- as.numeric(rmultinom(1,y.unk[g,j],prob=prob))
-        y.sight[avail.inds,g,j] <- y.sight[avail.inds,g,j] + add
-        y.event[avail.inds,g,j,3] <- y.event[avail.inds,g,j,3] + add
+    if(J.sight[g]>0){
+      D.sight <- e2dist(s.init,X.sight[g,1:J.sight[g],1:2])
+      lamd <- lam0[g]*exp(-D.sight*D.sight/(2*sigma[g]*sigma[g]))
+      for(j in 1:J.sight[g]){
+        #marked, no-ID detections: category 2, only currently marked individuals
+        if(y.mnoID[g,j]>0){
+          marked.inds <- which(mark.states[,g]==1 & tel.z.states[,g]!=0)
+          prob <- lamd[marked.inds,j]
+          if(sum(prob)<=0) stop(paste("No valid marked candidates for marked-no-ID sightings in year",g,"trap",j))
+          prob <- prob/sum(prob)
+          add <- as.numeric(rmultinom(1,y.mnoID[g,j],prob=prob))
+          y.sight[marked.inds,g,j] <- y.sight[marked.inds,g,j] + add
+          y.event[marked.inds,g,j,2] <- y.event[marked.inds,g,j,2] + add
+        }
+        
+        #unmarked detections: category 2, only currently unmarked individuals
+        if(y.um[g,j]>0){
+          unmarked.inds <- which(mark.states[,g]==0 & tel.z.states[,g]!=0)
+          prob <- lamd[unmarked.inds,j]
+          if(sum(prob)<=0) stop(paste("No valid unmarked candidates for unmarked sightings in year",g,"trap",j))
+          prob <- prob/sum(prob)
+          add <- as.numeric(rmultinom(1,y.um[g,j],prob=prob))
+          y.sight[unmarked.inds,g,j] <- y.sight[unmarked.inds,g,j] + add
+          y.event[unmarked.inds,g,j,2] <- y.event[unmarked.inds,g,j,2] + add
+        }
+        
+        #unknown marked-status detections: category 3, any not-known-dead individual
+        if(y.unk[g,j]>0){
+          avail.inds <- which(tel.z.states[,g]!=0)
+          prob <- lamd[avail.inds,j]
+          if(sum(prob)<=0) stop(paste("No valid candidates for unknown-status sightings in year",g,"trap",j))
+          prob <- prob/sum(prob)
+          add <- as.numeric(rmultinom(1,y.unk[g,j],prob=prob))
+          y.sight[avail.inds,g,j] <- y.sight[avail.inds,g,j] + add
+          y.event[avail.inds,g,j,3] <- y.event[avail.inds,g,j,3] + add
+        }
       }
     }
   }
@@ -205,7 +210,9 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   #construct ID/event lists from y.event
   n.samples <- rep(0,n.primary)
   for(g in 1:n.primary){
-    n.samples[g] <- sum(y.mnoID[g,1:J.sight[g]]) + sum(y.um[g,1:J.sight[g]]) + sum(y.unk[g,1:J.sight[g]])
+    if(J.sight[g]>0){
+      n.samples[g] <- sum(y.mnoID[g,1:J.sight[g]]) + sum(y.um[g,1:J.sight[g]]) + sum(y.unk[g,1:J.sight[g]])
+    }
   }
   n.samples.max <- max(n.samples)
   
@@ -213,7 +220,6 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   this.j <- matrix(0,nrow=n.primary,ncol=n.samples.max)
   event.type <- matrix(0,nrow=n.primary,ncol=n.samples.max)
   match <- array(FALSE,dim=c(n.primary,n.samples.max,M))
-  
   for(g in 1:n.primary){
     if(n.samples[g]>0){
       idx.samp <- 1
@@ -232,7 +238,6 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
           }
         }
       }
-      
       #unmarked samples: category 2, only currently unmarked individuals are valid matches
       unmarked.inds <- which(mark.states[,g]==0)
       for(i in unmarked.inds){
@@ -248,7 +253,6 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
           }
         }
       }
-      
       #unknown marked-status samples: category 3, any not-known-dead individual is valid
       for(i in 1:M){
         for(j in 1:J.sight[g]){
@@ -263,7 +267,6 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
           }
         }
       }
-      
       if(idx.samp != (n.samples[g]+1)) stop(paste("Sample-list construction mismatch in year",g))
     }
   }
@@ -271,8 +274,10 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   #baseline capcounts from known marked-ID category-1 detections
   capcounts.ID <- matrix(0,n.primary,M)
   for(g in 1:n.primary){
-    for(i in 1:n.marked.all){
-      capcounts.ID[g,i] <- sum(y.event[i,g,1:J.sight[g],1])
+    if(J.sight[g]>0){
+      for(i in 1:n.marked.all){
+        capcounts.ID[g,i] <- sum(y.event[i,g,1:J.sight[g],1])
+      }
     }
   }
   
@@ -320,33 +325,35 @@ init.SMR.Dcov.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA){
   
   #basic starting likelihood checks
   for(g in 1:n.primary){
-    D.mark <- e2dist(s.init,X.mark[g,1:J.mark[g],1:2])
-    pd <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
-    logProb <- array(0,dim=c(M,J.mark[g]))
-    for(i in 1:M){
-      for(j in 1:J.mark[g]){
-        logProb[i,j] <- dbinom(y.mark[i,g,j],size=K1D.mark[g,j],prob=pd[i,j],log=TRUE)
-      }
-    }
-    if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, year",g))
-    
-    D.sight <- e2dist(s.init,X.sight[g,1:J.sight[g],1:2])
-    lamd <- lam0[g]*exp(-D.sight*D.sight/(2*sigma[g]*sigma[g]))
-    logProb <- matrix(0,M,J.sight[g])
-    for(i in 1:M){
-      for(j in 1:J.sight[g]){
-        if(obsmod=="poisson"){
-          logProb[i,j] <- dpois(y.sight[i,g,j],lambda=lamd[i,j]*K1D.sight[g,j],log=TRUE)
-        }else if(obsmod=="negbin"){
-          logProb[i,j] <- dnbinom(y.sight[i,g,j],mu=lamd[i,j]*K1D.sight[g,j],size=theta.d[g]*K1D.sight[g,j],log=TRUE)
+    if(J.mark[g]>0){
+      D.mark <- e2dist(s.init,X.mark[g,1:J.mark[g],1:2])
+      pd <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
+      logProb <- array(0,dim=c(M,J.mark[g]))
+      for(i in 1:M){
+        for(j in 1:J.mark[g]){
+          logProb[i,j] <- dbinom(y.mark[i,g,j],size=K1D.mark[g,j],prob=pd[i,j],log=TRUE)
         }
       }
+      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, year",g))
     }
-    if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Sighting process, year",g))
-    
-    #check y.event sums back to y.sight
-    if(any(apply(y.event[,g,1:J.sight[g],1:3],c(1,2),sum) != y.sight[,g,1:J.sight[g]])){
-      stop(paste("y.event does not sum to y.sight in year",g))
+    if(J.sight[g]>0){
+      D.sight <- e2dist(s.init,X.sight[g,1:J.sight[g],1:2])
+      lamd <- lam0[g]*exp(-D.sight*D.sight/(2*sigma[g]*sigma[g]))
+      logProb <- matrix(0,M,J.sight[g])
+      for(i in 1:M){
+        for(j in 1:J.sight[g]){
+          if(obsmod=="poisson"){
+            logProb[i,j] <- dpois(y.sight[i,g,j],lambda=lamd[i,j]*K1D.sight[g,j],log=TRUE)
+          }else if(obsmod=="negbin"){
+            logProb[i,j] <- dnbinom(y.sight[i,g,j],mu=lamd[i,j]*K1D.sight[g,j],size=theta.d[g]*K1D.sight[g,j],log=TRUE)
+          }
+        }
+      }
+      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Sighting process, year",g))
+      #check y.event sums back to y.sight
+      if(any(apply(y.event[,g,1:J.sight[g],1:3],c(1,2),sum) != y.sight[,g,1:J.sight[g]])){
+        stop(paste("y.event does not sum to y.sight in year",g))
+      }
     }
   }
   

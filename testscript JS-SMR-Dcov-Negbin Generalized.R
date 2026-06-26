@@ -35,8 +35,7 @@ theta.marked <- c(0.75,0.15,0.1) #P(ID, Marked no ID, unk status). must sum to 1
 theta.unmarked <- 0.75 #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
 
 #make an SCR trapping array. Making the trapping array size vary by session
-#I think the code currently requires marking/sighting traps in all sessions
-#even when not used. Will fix that.
+#For occasions with no marking or sighting, insert a trap matrix with 0 rows, matrix(0,nrow=0,ncol=2)
 X.sight <- vector("list",n.primary)
 X.sight[[1]] <- as.matrix(expand.grid(1:10,1:10))
 X.sight[[2]] <- as.matrix(expand.grid(1:10,1:10))
@@ -47,11 +46,33 @@ X.sight[[6]] <- as.matrix(expand.grid(1:10,1:10))
 
 X.mark <- vector("list",n.primary)
 X.mark[[1]] <- as.matrix(expand.grid(3:8,3:8))
-X.mark[[2]] <- as.matrix(expand.grid(3:8,3:8))
-X.mark[[3]] <- as.matrix(expand.grid(3:8,3:8))
+X.mark[[2]] <- matrix(0,nrow=0,ncol=2)
+X.mark[[3]] <- matrix(0,nrow=0,ncol=2)
 X.mark[[4]] <- as.matrix(expand.grid(3:8,3:8))
-X.mark[[5]] <- as.matrix(expand.grid(3:8,3:8))
-X.mark[[6]] <- as.matrix(expand.grid(3:8,3:8))
+X.mark[[5]] <- matrix(0,nrow=0,ncol=2)
+X.mark[[6]] <- matrix(0,nrow=0,ncol=2)
+
+#Check for consistency between traps and occasions
+for(g in 1:n.primary){
+  if(K.sight[g]==0){ #trap matrix should have 0 rows
+    if(!nrow(X.sight[[g]])==0){
+      stop(paste("X.sight and K.sight inconsistent, session",g))
+    }
+  }else{ #trap matrix should have >0 rows
+    if(nrow(X.sight[[g]])==0){
+      stop(paste("X.sight and K.sight inconsistent, session",g))
+    }
+  }
+  if(K.mark[g]==0){ #trap matrix should have 0 rows
+    if(!nrow(X.mark[[g]])==0){
+      stop(paste("X.mark and K.mark inconsistent, session",g))
+    }
+  }else{ #trap matrix should have >0 rows
+    if(nrow(X.mark[[g]])==0){
+      stop(paste("X.mark and K.mark inconsistent, session",g))
+    }
+  }
+}
 
 ### Habitat covariate stuff###
 #get x and y extent for each grid separately, then merge
@@ -192,21 +213,29 @@ points(data$truth$s,pch=16)
 for(g in 1:n.primary){
   image(data$x.vals,data$y.vals,matrix(data$D.cov*data$InSS,data$n.cells.x,data$n.cells.y),
         main=paste("Year",g),xlab="X",ylab="Y",col=cols1)
-  if(K.sight[g]>0){
+  if(data$J.sight[g]>0){
     points(data$X.sight[[g]],pch=4,lwd=2)
   }
-  if(K.mark[g]>0){
+  if(data$J.mark[g]>0){
     points(data$X.mark[[g]],pch=4,lwd=2,col="darkred")
   }
   points(data$truth$s[data$truth$z[,g]==1,1],data$truth$s[data$truth$z[,g]==1,2],pch=16) #activity centers
   if(data$n.marked[g]>0){
     for(i in 1:data$n.marked[g]){
       id <- data$ID.marked[[g]][i]
-      trapcaps <- which(data$y.mID[id,g,]>0)
-      traps <-  data$X.sight[[g]][1:data$J.sight[g],][trapcaps,]
-      trapcaps2 <- which(data$y.mark[id,g,]>0)
-      traps2 <-  data$X.mark[[g]][1:data$J.mark[g],][trapcaps2,]
-      traps <- rbind(traps,traps2)
+      traps <- matrix(numeric(0),nrow=0,ncol=2)
+      if(data$J.sight[g]>0){
+        trapcaps <- which(data$y.mID[id,g,]>0)
+        if(length(trapcaps)>0){
+          traps <- rbind(traps,data$X.sight[[g]][1:data$J.sight[g],][trapcaps,])
+        }
+      }
+      if(data$J.mark[g]>0){
+        trapcaps2 <- which(data$y.mark[id,g,]>0)
+        if(length(trapcaps2)>0){
+          traps <- rbind(traps,data$X.mark[[g]][1:data$J.mark[g],][trapcaps2,])
+        }
+      }
       s <- data$s[id,]
       points(s[1],s[2],col="goldenrod",pch=16)
       if(nrow(traps)>0){
@@ -293,11 +322,20 @@ for(g in 1:n.primary){
   points(data$X.mark[[g]],pch=4,lwd=2,col="darkred")
   points(nimbuild$s[nimbuild$z[,g]==1,1],nimbuild$s[nimbuild$z[,g]==1,2],pch=16) #initialized activity centers
   for(i in 1:n.marked[g]){
-    trapcaps <- which(nimbuild$y.mID[nimbuild$ID.marked[i,g],g,]>0)
-    traps <-  nimbuild$X.sight[g,1:J.sight[g],][trapcaps,]
-    trapcaps2 <- which(nimbuild$y.mark[nimbuild$ID.marked[i,g],g,]>0)
-    traps2 <-  nimbuild$X.mark[g,1:J.mark[g],][trapcaps2,]
-    traps <- rbind(traps,traps2)
+    id <- nimbuild$ID.marked[i,g]
+    traps <- matrix(numeric(0),nrow=0,ncol=2)
+    if(J.sight[g]>0){
+      trapcaps <- which(nimbuild$y.mID[id,g,1:J.sight[g]]>0)
+      if(length(trapcaps)>0){
+        traps <- rbind(traps,nimbuild$X.sight[g,trapcaps,1:2])
+      }
+    }
+    if(J.mark[g]>0){
+      trapcaps2 <- which(nimbuild$y.mark[id,g,1:J.mark[g]]>0)
+      if(length(trapcaps2)>0){
+        traps <- rbind(traps,nimbuild$X.mark[g,trapcaps2,1:2])
+      }
+    }
     s <- nimbuild$s[nimbuild$ID.marked[i,g],]
     points(s[1],s[2],col="goldenrod",pch=16)
     if(nrow(traps)>0){
@@ -315,16 +353,10 @@ n.mark.years <- length(mark.years)
 n.sight.years <- length(sight.years)
 
 #constants for Nimble
-capcounts.ID <- matrix(0,n.primary,M)
-for(g in 1:n.primary){
-  capcounts.ID[g,1:n.marked.all] <- rowSums(data$y.mID[,g,])
-}
-
 #might want to center D.cov here. Simulated D.cov in this testscript is already effectively centered.
 constants <- list(n.primary=n.primary,M=M,J.mark=J.mark,J.sight=J.sight,xlim=xlim,ylim=ylim,
                   K1D.mark=nimbuild$K1D.mark,K1D.sight=nimbuild$K1D.sight,
                   D.cov=D.cov,cellArea=cellArea,n.cells=n.cells,res=res,
-                  # n.marked.all=nimbuild$n.marked.all,
                   n.tel.sessions=data$n.tel.sessions,tel.session=data$tel.session,max.n.tel.locs=max.n.tel.locs,
                   tel.ID=data$tel.ID,n.tel.inds=data$n.tel.inds,n.locs.ind=data$n.locs.ind,
                   mark.years=mark.years,sight.years=sight.years,n.mark.years=n.mark.years,
@@ -344,7 +376,7 @@ Nimdata <- list(y.mark=nimbuild$y.mark, #marking process
                 mark.states=nimbuild$mark.states, #mark state history (who is marked in each year)
                 tel.z.states=nimbuild$tel.z.states, #telemetry z state observations
                 dummy.data=nimbuild$dummy.data,cells=cells,InSS=InSS,
-                capcounts.ID=capcounts.ID,
+                capcounts.ID=nimbuild$capcounts.ID,
                 X.mark=nimbuild$X.mark,X.sight=nimbuild$X.sight,locs=data$locs)
 
 # set parameters to monitor

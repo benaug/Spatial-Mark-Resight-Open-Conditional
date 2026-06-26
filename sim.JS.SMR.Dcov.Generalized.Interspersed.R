@@ -132,7 +132,6 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   z.start <- apply(z,1,function(x){which(x==1)[1]})
   z.stop <- n.primary-apply(z,1,function(x){which(rev(x)==1)[1]})+1
   
-  
   #detection
   J.mark.max <- max(J.mark)
   K.mark.max <- max(K.mark)
@@ -156,9 +155,8 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   #Capture and mark individuals
   pd <- array(0,dim=c(N.super,n.primary,J.mark.max))
   y.mark <- array(0,dim=c(N.super,n.primary,J.mark.max,K.mark.max))
-  
   for(g in 1:n.primary){
-    if(K.mark[g]>0){
+    if(J.mark[g]>0){
       D.mark <- e2dist(s,X.mark[[g]])
       pd[,g,1:J.mark[g]] <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
       for(i in 1:N.super){
@@ -172,11 +170,9 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
       }
     }
   }
-  
   #resight individuals
   lamd <- array(0,dim=c(N.super,n.primary,J.sight.max))
   y <- array(0,dim=c(N.super,n.primary,J.sight.max,K.sight.max))
-  
   if(!(obsmod %in% c("poisson","negbin"))) stop("obsmod must be 'poisson' or 'negbin'.")
   if(obsmod=="negbin"){
     if(any(is.na(theta.d))) stop("Must provide theta.d for negbin obsmod.")
@@ -185,7 +181,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   }
   
   for(g in 1:n.primary){
-    if(K.sight[g]>0){
+    if(J.sight[g]>0){
       D <- e2dist(s,X.sight[[g]])
       lamd[,g,1:J.sight[g]] <- lam0[g]*exp(-D*D/(2*sigma[g]*sigma[g]))
       for(i in 1:N.super){
@@ -205,7 +201,6 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
       }
     }
   }
-  
   if(sum(y)==0)stop("No individuals resighted. Reconsider parameter settings.")
 
   #store true data for debugging
@@ -295,7 +290,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   y.mnoID <- y.um <- y.unk <- array(0,dim=c(n.primary,J.sight.max,K.sight.max))
   
   for(g in 1:n.primary){
-    if(K.sight[g]>0){
+    if(J.sight[g]>0){
       idx <- which(y[,g,,]>0,arr.ind=TRUE)
       if(nrow(idx)>0){
         for(l in 1:nrow(idx)){
@@ -371,34 +366,6 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
       tel.ID.g[[g]] <- collared.g
     }
   }
-  
-  #simulate telemetry locations
-  # if(n.tel.locs>0&sum(y.mark)>0){
-  #   n.tel.sessions <- rowSums(tel.z.states==1,na.rm=TRUE)
-  #   n.tel.sessions <- n.tel.sessions[ID.marked.all]
-  #   n.tel.inds <- sum(n.tel.sessions>0)
-  #   tel.session <- matrix(NA,n.tel.inds,n.primary)
-  #   max.n.tel.sessions <- max(n.tel.sessions)
-  #   locs <- array(NA,dim=c(n.tel.inds,max.n.tel.sessions,n.tel.locs,2))
-  #   for(i in 1:n.tel.inds){
-  #     tel.session[i,1:n.tel.sessions[i]] <- which(tel.z.states[ID.marked.all[i],]==1)
-  #     for(g in 1:n.tel.sessions[i]){
-  #       #if adding movement, reference correct s years
-  #       locs[i,g,,] <- c(rnorm(n.tel.locs,s[ID.marked.all[i],1],sigma[tel.session[i,g]]),
-  #                        rnorm(n.tel.locs,s[ID.marked.all[i],2],sigma[tel.session[i,g]]))
-  #     }
-  #   }
-  #   n.locs.ind <- apply(!is.na(locs[,,,1]),c(1,2),sum)
-  #   if(dim(locs)[2]==1){
-  #     n.locs.ind <- matrix(rowSums(n.locs.ind),ncol=1)
-  #   }
-  # }else{
-  #   print("no individuals captured, no telemetry")
-  #   locs <- tel.session <- NA
-  #   n.tel.inds <- 0
-  #   n.tel.sessions <- NA
-  #   n.locs.ind <- NA
-  # }
   
   mark.states2D <- mark.states2D[ID.marked.all,,drop=FALSE]
   mark.states <- mark.states[ID.marked.all,,,drop=FALSE]

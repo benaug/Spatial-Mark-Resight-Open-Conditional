@@ -55,10 +55,12 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
     if(n.marked[g]>0){
       ID.marked[1:n.marked[g],g] <- data$ID.marked[[g]]
     }
-    X.mark[g,1:J.mark[g],1:2] <- data$X.mark[[g]]
-    K1D.mark[g,1:J.mark[g]] <- data$K1D.mark[[g]]
-    X.sight[g,1:J.sight[g],1:2] <- data$X.sight[[g]]
+    if(J.mark[g]>0){
+      X.mark[g,1:J.mark[g],1:2] <- data$X.mark[[g]]
+      K1D.mark[g,1:J.mark[g]] <- data$K1D.mark[[g]]
+    }
     if(K.sight[g]>0){
+      X.sight[g,1:J.sight[g],1:2] <- data$X.sight[[g]]
       K2D.sight[g,1:J.sight[g],1:K.sight[g]] <- data$K2D.sight[[g]]
     }
   }
@@ -85,7 +87,6 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
   has.mID[1:n.marked.all] <- rowSums(y.mID)>0
   has.tel <- (1:n.cap.all)%in%data$tel.ID
   idx <- which(has.mark|has.mID|has.tel)
-  
   for(i in idx){
     trps <- matrix(0,nrow=0,ncol=2)
     for(g in 1:n.primary){
@@ -219,7 +220,9 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
   n.samples <- rep(0,n.primary)
   for(g in 1:n.primary){
     if(K.sight[g]>0){
-      n.samples[g] <- sum(y.mnoID[g,1:J.sight[g],1:K.sight[g]]) + sum(y.um[g,1:J.sight[g],1:K.sight[g]]) + sum(y.unk[g,1:J.sight[g],1:K.sight[g]])
+      n.samples[g] <- sum(y.mnoID[g,1:J.sight[g],1:K.sight[g]]) +
+        sum(y.um[g,1:J.sight[g],1:K.sight[g]]) +
+        sum(y.unk[g,1:J.sight[g],1:K.sight[g]])
     }
   }
   n.samples.max <- max(n.samples)
@@ -229,11 +232,9 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
   this.k <- matrix(0,nrow=n.primary,ncol=n.samples.max)
   event.type <- matrix(0,nrow=n.primary,ncol=n.samples.max)
   match <- array(FALSE,dim=c(n.primary,n.samples.max,M))
-  
   for(g in 1:n.primary){
     if(n.samples[g]>0){
       idx.samp <- 1
-      
       #marked no-ID samples: category 2, only currently marked individuals are valid matches
       for(k in 1:K.sight[g]){
         marked.inds <- which(mark.states[,g,k]==1)
@@ -252,7 +253,6 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           }
         }
       }
-      
       #unmarked samples: category 2, only currently unmarked individuals are valid matches
       for(k in 1:K.sight[g]){
         unmarked.inds <- which(mark.states[,g,k]==0)
@@ -271,7 +271,6 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           }
         }
       }
-      
       #unknown marked-status samples: category 3, any not-known-dead individual is valid
       for(i in 1:M){
         for(j in 1:J.sight[g]){
@@ -289,7 +288,6 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           }
         }
       }
-      
       if(idx.samp != (n.samples[g]+1)) stop(paste("Sample-list construction mismatch in year",g))
     }
   }
@@ -297,8 +295,8 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
   #baseline capcounts from known marked-ID category-1 detections
   capcounts.ID <- matrix(0,n.primary,M)
   for(g in 1:n.primary){
-    for(i in 1:n.marked.all){
-      if(K.sight[g]>0){
+    if(K.sight[g]>0){
+      for(i in 1:n.marked.all){
         capcounts.ID[g,i] <- sum(y.event[i,g,1:J.sight[g],1:K.sight[g],1])
       }
     }
@@ -348,16 +346,17 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
   
   #basic starting likelihood checks
   for(g in 1:n.primary){
-    D.mark <- e2dist(s.init,X.mark[g,1:J.mark[g],1:2])
-    pd <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
-    logProb <- array(0,dim=c(M,J.mark[g]))
-    for(i in 1:M){
-      for(j in 1:J.mark[g]){
-        logProb[i,j] <- dbinom(y.mark[i,g,j],size=K1D.mark[g,j],prob=pd[i,j],log=TRUE)
+    if(J.mark[g]>0){
+      D.mark <- e2dist(s.init,X.mark[g,1:J.mark[g],1:2])
+      pd <- p0[g]*exp(-D.mark*D.mark/(2*sigma[g]*sigma[g]))
+      logProb <- array(0,dim=c(M,J.mark[g]))
+      for(i in 1:M){
+        for(j in 1:J.mark[g]){
+          logProb[i,j] <- dbinom(y.mark[i,g,j],size=K1D.mark[g,j],prob=pd[i,j],log=TRUE)
+        }
       }
+      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, year",g))
     }
-    if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, year",g))
-    
     if(K.sight[g]>0){
       D.sight <- e2dist(s.init,X.sight[g,1:J.sight[g],1:2])
       lamd <- lam0[g]*exp(-D.sight*D.sight/(2*sigma[g]*sigma[g]))
@@ -382,7 +381,6 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
         }
       }
       if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Sighting process, year",g))
-      
       #check y.event sums back to y.sight
       y.event.sum <- apply(y.event[,g,1:J.sight[g],1:K.sight[g],1:3,drop=FALSE],c(1,3,4),sum)
       y.sight.g <- y.sight[,g,1:J.sight[g],1:K.sight[g],drop=FALSE]
