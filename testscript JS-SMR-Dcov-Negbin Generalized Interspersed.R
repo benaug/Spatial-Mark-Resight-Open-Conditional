@@ -186,7 +186,8 @@ data <- sim.JS.SMR.Dcov.Generalized.Interspersed(D.beta0=D.beta0,D.beta1=D.beta1
             X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
             mark.year.pars=mark.year.pars,mark.protocol=mark.protocol,
             p.mark=p.mark,n.tel.locs=n.tel.locs)
-table(data$truth$y) #i x j x k detection counts. looking to see if theta.d produces plausible counts
+table(data$truth$y) #i x j detection counts summed over occasions. looking to see if theta.d produces plausible counts
+#easier to assess at i x j x k level, but data simulator currently does not store k dimension
 
 #what is observed data? Note data objects have all n.primarys with all 0 data if no effort for a method
 #Could be structured without years with no effort, but that would require more work changing custom

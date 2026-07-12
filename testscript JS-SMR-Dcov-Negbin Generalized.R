@@ -196,7 +196,8 @@ colSums(apply(data$y.mark>0,c(1,2),sum)>0) #total marking process captures per y
 colSums(data$mark.deploy) #total marks deployed per year
 rowSums(data$mark.deploy) #total marks deployed per captured individual
 data$n.marked #marks active per year
-table(data$truth$y) #i x j x k detection counts. looking to see if theta.d produces plausible counts
+table(data$truth$y) #i x j detection counts summed over occasions. looking to see if theta.d produces plausible counts
+#easier to assess at i x j x k level, but data simulator currently does not store k dimension
 
 #total detected individuals
 colSums(apply(data$truth$y,c(1,2),sum)>0)
