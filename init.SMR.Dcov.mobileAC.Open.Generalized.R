@@ -226,7 +226,7 @@ init.SMR.Dcov.mobileAC.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA
         if(y.mnoID[g,j]>0){
           marked.inds <- which(mark.states[,g]==1 & tel.z.states[,g]!=0)
           prob <- lamd[marked.inds,j]
-          if(sum(prob)<=0) stop(paste("No valid marked candidates for marked-no-ID sightings in year",g,"trap",j))
+          if(sum(prob)<=0) stop(paste("No valid marked candidates for marked-no-ID sightings in primary session",g,"trap",j))
           prob <- prob/sum(prob)
           add <- as.numeric(rmultinom(1,y.mnoID[g,j],prob=prob))
           y.sight[marked.inds,g,j] <- y.sight[marked.inds,g,j] + add
@@ -235,7 +235,7 @@ init.SMR.Dcov.mobileAC.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA
         if(y.um[g,j]>0){
           unmarked.inds <- which(mark.states[,g]==0 & tel.z.states[,g]!=0)
           prob <- lamd[unmarked.inds,j]
-          if(sum(prob)<=0) stop(paste("No valid unmarked candidates for unmarked sightings in year",g,"trap",j))
+          if(sum(prob)<=0) stop(paste("No valid unmarked candidates for unmarked sightings in primary session",g,"trap",j))
           prob <- prob/sum(prob)
           add <- as.numeric(rmultinom(1,y.um[g,j],prob=prob))
           y.sight[unmarked.inds,g,j] <- y.sight[unmarked.inds,g,j] + add
@@ -244,7 +244,7 @@ init.SMR.Dcov.mobileAC.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA
         if(y.unk[g,j]>0){
           avail.inds <- which(tel.z.states[,g]!=0)
           prob <- lamd[avail.inds,j]
-          if(sum(prob)<=0) stop(paste("No valid candidates for unknown-status sightings in year",g,"trap",j))
+          if(sum(prob)<=0) stop(paste("No valid candidates for unknown-status sightings in primary session",g,"trap",j))
           prob <- prob/sum(prob)
           add <- as.numeric(rmultinom(1,y.unk[g,j],prob=prob))
           y.sight[avail.inds,g,j] <- y.sight[avail.inds,g,j] + add
@@ -437,7 +437,7 @@ init.SMR.Dcov.mobileAC.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA
         }
       }
       
-      if(idx.samp != (n.samples[g]+1)) stop(paste("Sample-list construction mismatch in year",g))
+      if(idx.samp != (n.samples[g]+1)) stop(paste("Sample-list construction mismatch in primary session",g))
     }
   }
   
@@ -518,7 +518,7 @@ init.SMR.Dcov.mobileAC.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA
           logProb[i,j] <- dbinom(y.mark[i,g,j],size=K1D.mark[g,j],prob=pd[i,j],log=TRUE)
         }
       }
-      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, year",g))
+      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, primary session",g))
     }
     if(J.sight[g]>0){
       D.sight <- e2dist(s.init[,g,],X.sight[g,1:J.sight[g],1:2])
@@ -533,10 +533,10 @@ init.SMR.Dcov.mobileAC.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA
           }
         }
       }
-      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Sighting process, year",g))
+      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Sighting process, primary session",g))
       #check y.event sums back to y.sight
       if(any(apply(y.event[,g,1:J.sight[g],1:3],c(1,2),sum) != y.sight[,g,1:J.sight[g]])){
-        stop(paste("y.event does not sum to y.sight in year",g))
+        stop(paste("y.event does not sum to y.sight in primary session",g))
       }
     }
   }

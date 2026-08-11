@@ -145,7 +145,7 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           if(y.mnoID[g,j,k]>0){
             marked.inds <- which(mark.states[,g,k]==1 & tel.z.states[,g]!=0)
             prob <- lamd[marked.inds,j]*K2D.sight[g,j,k]
-            if(sum(prob)<=0) stop(paste("No valid marked candidates for marked-no-ID sightings in year",g,"trap",j,"occasion",k))
+            if(sum(prob)<=0) stop(paste("No valid marked candidates for marked-no-ID sightings in primary occasion",g,"trap",j,"occasion",k))
             prob <- prob/sum(prob)
             add <- as.numeric(rmultinom(1,y.mnoID[g,j,k],prob=prob))
             y.sight[marked.inds,g,j,k] <- y.sight[marked.inds,g,j,k] + add
@@ -156,7 +156,7 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           if(y.um[g,j,k]>0){
             unmarked.inds <- which(mark.states[,g,k]==0 & tel.z.states[,g]!=0)
             prob <- lamd[unmarked.inds,j]*K2D.sight[g,j,k]
-            if(sum(prob)<=0) stop(paste("No valid unmarked candidates for unmarked sightings in year",g,"trap",j,"occasion",k))
+            if(sum(prob)<=0) stop(paste("No valid unmarked candidates for unmarked sightings in primary occasion",g,"trap",j,"occasion",k))
             prob <- prob/sum(prob)
             add <- as.numeric(rmultinom(1,y.um[g,j,k],prob=prob))
             y.sight[unmarked.inds,g,j,k] <- y.sight[unmarked.inds,g,j,k] + add
@@ -167,7 +167,7 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           if(y.unk[g,j,k]>0){
             avail.inds <- which(tel.z.states[,g]!=0)
             prob <- lamd[avail.inds,j]*K2D.sight[g,j,k]
-            if(sum(prob)<=0) stop(paste("No valid candidates for unknown-status sightings in year",g,"trap",j,"occasion",k))
+            if(sum(prob)<=0) stop(paste("No valid candidates for unknown-status sightings in primary occasion",g,"trap",j,"occasion",k))
             prob <- prob/sum(prob)
             add <- as.numeric(rmultinom(1,y.unk[g,j,k],prob=prob))
             y.sight[avail.inds,g,j,k] <- y.sight[avail.inds,g,j,k] + add
@@ -288,7 +288,7 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           }
         }
       }
-      if(idx.samp != (n.samples[g]+1)) stop(paste("Sample-list construction mismatch in year",g))
+      if(idx.samp != (n.samples[g]+1)) stop(paste("Sample-list construction mismatch in primary occasion",g))
     }
   }
   
@@ -355,7 +355,7 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           logProb[i,j] <- dbinom(y.mark[i,g,j],size=K1D.mark[g,j],prob=pd[i,j],log=TRUE)
         }
       }
-      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, year",g))
+      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Marking process, primary occasion",g))
     }
     if(K.sight[g]>0){
       D.sight <- e2dist(s.init,X.sight[g,1:J.sight[g],1:2])
@@ -380,13 +380,13 @@ init.SMR.Dcov.Open.Generalized.Interspersed <- function(data,inits=NA,M=NA,obsmo
           }
         }
       }
-      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Sighting process, year",g))
+      if(!is.finite(sum(logProb))) stop(paste("Starting observation model likelihood not finite. Sighting process, primary occasion",g))
       #check y.event sums back to y.sight
       y.event.sum <- apply(y.event[,g,1:J.sight[g],1:K.sight[g],1:3,drop=FALSE],c(1,3,4),sum)
       y.sight.g <- y.sight[,g,1:J.sight[g],1:K.sight[g],drop=FALSE]
       dim(y.sight.g) <- c(M,J.sight[g],K.sight[g])
       if(any(y.event.sum != y.sight.g)){
-        stop(paste("y.event does not sum to y.sight in year",g))
+        stop(paste("y.event does not sum to y.sight in primary occasion",g))
       }
     }
   }

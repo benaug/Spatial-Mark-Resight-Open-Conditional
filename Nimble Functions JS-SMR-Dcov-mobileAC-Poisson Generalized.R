@@ -1,4 +1,4 @@
-dHabYear1 <- nimbleFunction(
+dHab1 <- nimbleFunction(
   run = function(x = double(1),pi.cell = double(1),cells = double(2),res = double(0),
                  dSS = double(2),xlim = double(1),ylim = double(1),z.super = double(0),
                  log = integer(0)) {
@@ -21,7 +21,7 @@ dHabYear1 <- nimbleFunction(
   }
 )
 
-rHabYear1 <- nimbleFunction(
+rHab1 <- nimbleFunction(
   run = function(n = integer(0),pi.cell = double(1),cells = double(2),res = double(0),
                  dSS = double(2),xlim = double(1),ylim = double(1),z.super = double(0)){
     returnType(double(1))
@@ -1135,7 +1135,7 @@ zSampler <- nimbleFunction(
               log.prop.back <- log.prop.back + dbinom(z.curr[g],1,model$phi[pick,g-1]*z.curr[g-1],log=TRUE)
             }
           }
-          log.prop.back.s <- dHabYear1(s.curr[1,1:2],pi.cell=model$pi.cell[1:n.cells],
+          log.prop.back.s <- dHab1(s.curr[1,1:2],pi.cell=model$pi.cell[1:n.cells],
                                        cells=cells[1:n.cells.x,1:n.cells.y],
                                        dSS=dSS[1:n.cells,1:2],res=res,
                                        xlim=xlim,ylim=ylim,z.super=1,log=TRUE)
@@ -1309,11 +1309,11 @@ zSampler <- nimbleFunction(
           model$calculate(ER.nodes) #update ER when N updated
           #simulate new s trajectory and record forward proposal probs (prior and likelihood cancel, but including both below for clarity)
           #propose primary occasion 1 from prior
-          model$s[pick,1,1:2] <<- rHabYear1(1,pi.cell=model$pi.cell[1:n.cells],
+          model$s[pick,1,1:2] <<- rHab1(1,pi.cell=model$pi.cell[1:n.cells],
                                             cells=cells[1:n.cells.x,1:n.cells.y],
                                             dSS=dSS[1:n.cells,1:2],res=res,
                                             xlim=xlim,ylim=ylim,z.super=1)
-          log.prop.for.s <- dHabYear1(model$s[pick,1,1:2],pi.cell=model$pi.cell[1:n.cells],
+          log.prop.for.s <- dHab1(model$s[pick,1,1:2],pi.cell=model$pi.cell[1:n.cells],
                                       cells=cells[1:n.cells.x,1:n.cells.y],
                                       dSS=dSS[1:n.cells,1:2],res=res,
                                       xlim=xlim,ylim=ylim,z.super=1,log=TRUE)

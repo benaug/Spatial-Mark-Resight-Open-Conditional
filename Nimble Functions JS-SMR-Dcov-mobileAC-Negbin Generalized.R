@@ -1,4 +1,4 @@
-dHabYear1 <- nimbleFunction(
+dHab1 <- nimbleFunction(
   run = function(x = double(1),pi.cell = double(1),cells = double(2),res = double(0),
                  dSS = double(2),xlim = double(1),ylim = double(1),z.super = double(0),
                  log = integer(0)) {
@@ -21,7 +21,7 @@ dHabYear1 <- nimbleFunction(
   }
 )
 
-rHabYear1 <- nimbleFunction(
+rHab1 <- nimbleFunction(
   run = function(n = integer(0),pi.cell = double(1),cells = double(2),res = double(0),
                  dSS = double(2),xlim = double(1),ylim = double(1),z.super = double(0)){
     returnType(double(1))
