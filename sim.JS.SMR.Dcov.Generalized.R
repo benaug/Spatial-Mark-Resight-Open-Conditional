@@ -70,7 +70,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   #Population dynamics
   N <- rep(NA,n.primary)
   N.recruit <- N.survive <- ER <- rep(NA,n.primary-1)
-  #get expected N in year 1 from D.cov parameters
+  #get expected N in primary occasion 1 from D.cov parameters
   cellArea <- res^2
   lambda.cell <- InSS*exp(D.beta0 + D.beta1*D.cov)*cellArea
   lambda.y1 <- sum(lambda.cell)
@@ -232,7 +232,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   y.mnoID <- y.um <- y.unk <- matrix(0,n.primary,J.sight.max)
   
   for(g in 1:n.primary){
-    if(J.sight[g]>0){ #skip if no effort in this year
+    if(J.sight[g]>0){ #skip if no effort in this primary occasion
       #loop over cells with positive counts
       idx <- which(y[,g,]>0,arr.ind=TRUE)
       for(l in 1:nrow(idx)){
@@ -244,7 +244,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
       }
       marked.inds <- which(mark.states[,g]==1)
       unmarked.inds <- which(mark.states[,g]==0)
-      y.mID[,g,] <- apply(y.event[ID.marked.all,g,,1],c(1,2),sum) #include all marked individuals for consistent individual numbers across years
+      y.mID[,g,] <- apply(y.event[ID.marked.all,g,,1],c(1,2),sum) #include all marked individuals for consistent individual numbers across primary occasions
       if(n.marked[g]>0){
         if(n.marked[g]==1){
           y.mnoID[g,] <- y.event[marked.inds,g,,2]
@@ -262,7 +262,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
     }
   }
   
-  #simulate telemetry locations for all collared years
+  #simulate telemetry locations for all collared primary occasions
   if(n.tel.locs>0&sum(mark.states)>0){
     n.tel.sessions.vec <- rowSums(tel.z.states==1,na.rm=TRUE)
     tel.ID <- which(n.tel.sessions.vec>0)
