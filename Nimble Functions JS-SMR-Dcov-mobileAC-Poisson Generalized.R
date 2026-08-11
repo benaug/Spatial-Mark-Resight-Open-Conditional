@@ -442,8 +442,8 @@ IDSamplerOpen <- nimbleFunction(
     M <- control$M
     J.sight <- control$J.sight
     n.primary <- control$n.primary
-    n.sight.years <- control$n.sight.years
-    sight.years <- control$sight.years
+    n.sight.g <- control$n.sight.g
+    sight.g <- control$sight.g
     mark.states <- control$mark.states
     event.type <- control$event.type
     match <- control$match
@@ -457,8 +457,8 @@ IDSamplerOpen <- nimbleFunction(
     y.event <- model$y.event
     ID.curr <- model$ID
     
-    for(g in 1:n.sight.years){
-      gg <- sight.years[g]
+    for(g in 1:n.sight.g){
+      gg <- sight.g[g]
       if(n.samples[gg] > 0){
         Jg <- J.sight[gg]
         #precalculate log likelihoods for this primary occasion
@@ -607,10 +607,10 @@ zSampler <- nimbleFunction(
     mark.states <- control$mark.states
     tel.z.states <- control$tel.z.states
     y2D <- control$y2D
-    mark.years <- control$mark.years
-    sight.years <- control$sight.years
-    n.mark.years <- control$n.mark.years
-    n.sight.years <- control$n.sight.years
+    mark.g <- control$mark.g
+    sight.g <- control$sight.g
+    n.mark.g <- control$n.mark.g
+    n.sight.g <- control$n.sight.g
     z.super.ups <- control$z.super.ups
     n.primary <- control$n.primary
     xlim <- control$xlim
@@ -647,8 +647,8 @@ zSampler <- nimbleFunction(
     y.req <- y2D
     for(i in 1:M){
       if(model$z.super[i]==1){
-        for(g in 1:n.sight.years){
-          gg <- sight.years[g]
+        for(g in 1:n.sight.g){
+          gg <- sight.g[g]
           # if(sum(model$y.sight[i,gg,1:J.sight[gg]]) > 0){
           #   y.req[i,gg] <- 1
           # }
@@ -672,8 +672,8 @@ zSampler <- nimbleFunction(
         dets <- which(y.req[i,]>0)
         first.det <- min(dets)
         lp.start <- rep(-Inf,n.primary)
-        i.idx.mark <- seq(i,M*n.mark.years,M) #used to reference correct marking process nodes (y.mark and pd nodes)
-        i.idx.sight <- seq(i,M*n.sight.years,M) #used to reference correct sighting process nodes
+        i.idx.mark <- seq(i,M*n.mark.g,M) #used to reference correct marking process nodes (y.mark and pd nodes)
+        i.idx.sight <- seq(i,M*n.sight.g,M) #used to reference correct sighting process nodes
         
         for(g in 1:first.det){ #must be recruited in primary occasion with first detection or before
           z.start.prop <- g
@@ -758,14 +758,14 @@ zSampler <- nimbleFunction(
           mvSaved["N.survive",1] <<- model[["N.survive"]]
           mvSaved["N.recruit",1] <<- model[["N.recruit"]]
           mvSaved["ER",1] <<- model[["ER"]]
-          for(g in 1:n.mark.years){
-            gg <- mark.years[g]
+          for(g in 1:n.mark.g){
+            gg <- mark.g[g]
             for(j in 1:J.mark[gg]){
               mvSaved["pd",1][i,gg,j] <<- model[["pd"]][i,gg,j]
             }
           }
-          for(g in 1:n.sight.years){
-            gg <- sight.years[g]
+          for(g in 1:n.sight.g){
+            gg <- sight.g[g]
             for(j in 1:J.sight[gg]){
               mvSaved["lam",1][i,gg,j] <<- model[["lam"]][i,gg,j]
             }
@@ -782,14 +782,14 @@ zSampler <- nimbleFunction(
           model[["N.survive"]] <<- mvSaved["N.survive",1]
           model[["N.recruit"]] <<- mvSaved["N.recruit",1]
           model[["ER"]] <<- mvSaved["ER",1]
-          for(g in 1:n.mark.years){
-            gg <- mark.years[g]
+          for(g in 1:n.mark.g){
+            gg <- mark.g[g]
             for(j in 1:J.mark[gg]){
               model[["pd"]][i,gg,j] <<- mvSaved["pd",1][i,gg,j]
             }
           }
-          for(g in 1:n.sight.years){
-            gg <- sight.years[g]
+          for(g in 1:n.sight.g){
+            gg <- sight.g[g]
             for(j in 1:J.sight[gg]){
               model[["lam"]][i,gg,j] <<- mvSaved["lam",1][i,gg,j]
             }
@@ -815,8 +815,8 @@ zSampler <- nimbleFunction(
         dets <- which(y.req[i,]>0)
         last.det <- max(dets)
         lp.stop <- rep(-Inf,n.primary)
-        i.idx.mark <- seq(i,M*n.mark.years,M) #used to reference correct marking process nodes (y.mark and pd nodes)
-        i.idx.sight <- seq(i,M*n.sight.years,M) #used to reference correct sighting process nodes (y.um, y.unk and lam nodes
+        i.idx.mark <- seq(i,M*n.mark.g,M) #used to reference correct marking process nodes (y.mark and pd nodes)
+        i.idx.sight <- seq(i,M*n.sight.g,M) #used to reference correct sighting process nodes (y.um, y.unk and lam nodes
         for(g in (last.det):n.primary){ #can't die on or before primary occasion of last detection
           model$z.stop[i] <<- g
           z.prop <- rep(0,n.primary)
@@ -865,14 +865,14 @@ zSampler <- nimbleFunction(
           mvSaved["N",1] <<- model[["N"]]
           mvSaved["N.survive",1] <<- model[["N.survive"]]
           mvSaved["ER",1] <<- model[["ER"]]
-          for(g in 1:n.mark.years){
-            gg <- mark.years[g]
+          for(g in 1:n.mark.g){
+            gg <- mark.g[g]
             for(j in 1:J.mark[gg]){
               mvSaved["pd",1][i,gg,j] <<- model[["pd"]][i,gg,j]
             }
           }
-          for(g in 1:n.sight.years){
-            gg <- sight.years[g]
+          for(g in 1:n.sight.g){
+            gg <- sight.g[g]
             for(j in 1:J.sight[gg]){
               mvSaved["lam",1][i,gg,j] <<- model[["lam"]][i,gg,j]
             }
@@ -883,14 +883,14 @@ zSampler <- nimbleFunction(
           model[["N"]] <<- mvSaved["N",1]
           model[["N.survive"]] <<- mvSaved["N.survive",1]
           model[["ER"]] <<- mvSaved["ER",1]
-          for(g in 1:n.mark.years){
-            gg <- mark.years[g]
+          for(g in 1:n.mark.g){
+            gg <- mark.g[g]
             for(j in 1:J.mark[gg]){
               model[["pd"]][i,gg,j] <<- mvSaved["pd",1][i,gg,j]
             }
           }
-          for(g in 1:n.sight.years){
-            gg <- sight.years[g]
+          for(g in 1:n.sight.g){
+            gg <- sight.g[g]
             for(j in 1:J.sight[gg]){
               model[["lam"]][i,gg,j] <<- mvSaved["lam",1][i,gg,j]
             }
@@ -914,8 +914,8 @@ zSampler <- nimbleFunction(
         z.curr <- model$z[i,]
         z.start.curr <- model$z.start[i]
         z.stop.curr <- model$z.stop[i]
-        i.idx.mark <- seq(i,M*n.mark.years,M) #used to reference correct marking process nodes (y.mark and pd nodes)
-        i.idx.sight <- seq(i,M*n.sight.years,M) #used to reference correct sighting process nodes (y.um, y.unk and lam nodes
+        i.idx.mark <- seq(i,M*n.mark.g,M) #used to reference correct marking process nodes (y.mark and pd nodes)
+        i.idx.sight <- seq(i,M*n.sight.g,M) #used to reference correct sighting process nodes (y.um, y.unk and lam nodes
         #get forwards recruitment probabilities
         recruit.probs.for <- c(model$lambda.y1,model$ER)
         recruit.probs.for <- recruit.probs.for/sum(recruit.probs.for)
@@ -1007,14 +1007,14 @@ zSampler <- nimbleFunction(
           mvSaved["N.survive",1] <<- model[["N.survive"]]
           mvSaved["N.recruit",1] <<- model[["N.recruit"]]
           mvSaved["ER",1] <<- model[["ER"]]
-          for(g in 1:n.mark.years){
-            gg <- mark.years[g]
+          for(g in 1:n.mark.g){
+            gg <- mark.g[g]
             for(j in 1:J.mark[gg]){
               mvSaved["pd",1][i,gg,j] <<- model[["pd"]][i,gg,j]
             }
           }
-          for(g in 1:n.sight.years){
-            gg <- sight.years[g]
+          for(g in 1:n.sight.g){
+            gg <- sight.g[g]
             for(j in 1:J.sight[gg]){
               mvSaved["lam",1][i,gg,j] <<- model[["lam"]][i,gg,j]
             }
@@ -1028,14 +1028,14 @@ zSampler <- nimbleFunction(
           model[["N.survive"]] <<- mvSaved["N.survive",1]
           model[["N.recruit"]] <<- mvSaved["N.recruit",1]
           model[["ER"]] <<- mvSaved["ER",1]
-          for(g in 1:n.mark.years){
-            gg <- mark.years[g]
+          for(g in 1:n.mark.g){
+            gg <- mark.g[g]
             for(j in 1:J.mark[gg]){
               model[["pd"]][i,gg,j] <<- mvSaved["pd",1][i,gg,j]
             }
           }
-          for(g in 1:n.sight.years){
-            gg <- sight.years[g]
+          for(g in 1:n.sight.g){
+            gg <- sight.g[g]
             for(j in 1:J.sight[gg]){
               model[["lam"]][i,gg,j] <<- mvSaved["lam",1][i,gg,j]
             }
@@ -1067,8 +1067,8 @@ zSampler <- nimbleFunction(
           reject <- TRUE
         }
         if(!reject){
-          for(g in 1:n.sight.years){
-            gg <- sight.years[g]
+          for(g in 1:n.sight.g){
+            gg <- sight.g[g]
             if(model$capcounts[gg,pick] > 0){
               reject <- TRUE
             }
@@ -1084,8 +1084,8 @@ zSampler <- nimbleFunction(
           log.p.select.for <- log(1/non.init)
           #log multinomial coefficient prior
           log.z.prior.for <- - (lgamma(M+1) - sum(lgamma(entry.counts.curr+1)))
-          pick.idx.mark <- seq(pick,M*n.mark.years,M) #used to reference correct marking process nodes (y.mark and pd nodes)
-          pick.idx.sight <- seq(pick,M*n.sight.years,M)
+          pick.idx.mark <- seq(pick,M*n.mark.g,M) #used to reference correct marking process nodes (y.mark and pd nodes)
+          pick.idx.sight <- seq(pick,M*n.sight.g,M)
           pick.idx.s <- seq(pick,M*n.primary,M)
           
           #get initial logProbs (survival logProb does not change)
@@ -1195,14 +1195,14 @@ zSampler <- nimbleFunction(
               mvSaved["avail.dist",1][pick,g,] <<- model[["avail.dist"]][pick,g,]
               mvSaved["use.dist",1][pick,g,] <<- model[["use.dist"]][pick,g,]
             }
-            for(g in 1:n.mark.years){
-              gg <- mark.years[g]
+            for(g in 1:n.mark.g){
+              gg <- mark.g[g]
               for(j in 1:J.mark[gg]){
                 mvSaved["pd",1][pick,gg,j] <<- model[["pd"]][pick,gg,j]
               }
             }
-            for(g in 1:n.sight.years){
-              gg <- sight.years[g]
+            for(g in 1:n.sight.g){
+              gg <- sight.g[g]
               for(j in 1:J.sight[gg]){
                 mvSaved["lam",1][pick,gg,j] <<- model[["lam"]][pick,gg,j]
               }
@@ -1223,14 +1223,14 @@ zSampler <- nimbleFunction(
               model[["avail.dist"]][pick,g,] <<- mvSaved["avail.dist",1][pick,g,]
               model[["use.dist"]][pick,g,] <<- mvSaved["use.dist",1][pick,g,]
             }
-            for(g in 1:n.mark.years){
-              gg <- mark.years[g]
+            for(g in 1:n.mark.g){
+              gg <- mark.g[g]
               for(j in 1:J.mark[gg]){
                 model[["pd"]][pick,gg,j] <<- mvSaved["pd",1][pick,gg,j]
               }
             }
-            for(g in 1:n.sight.years){
-              gg <- sight.years[g]
+            for(g in 1:n.sight.g){
+              gg <- sight.g[g]
               for(j in 1:J.sight[gg]){
                 model[["lam"]][pick,gg,j] <<- mvSaved["lam",1][pick,gg,j]
               }
@@ -1251,8 +1251,8 @@ zSampler <- nimbleFunction(
           noff.init <- length(z.off)
           pick <- rcat(1,rep(1/noff.init,noff.init)) #select one of these individuals
           pick <- z.off[pick]
-          pick.idx.mark <- seq(pick,M*n.mark.years,M) #used to reference correct marking process nodes (y.mark and pd nodes)
-          pick.idx.sight <- seq(pick,M*n.sight.years,M)
+          pick.idx.mark <- seq(pick,M*n.mark.g,M) #used to reference correct marking process nodes (y.mark and pd nodes)
+          pick.idx.sight <- seq(pick,M*n.sight.g,M)
           pick.idx.s <- seq(pick,M*n.primary,M)
           
           non.init <- sum(model$z.super == 1)
@@ -1389,14 +1389,14 @@ zSampler <- nimbleFunction(
               mvSaved["avail.dist",1][pick,g,] <<- model[["avail.dist"]][pick,g,]
               mvSaved["use.dist",1][pick,g,] <<- model[["use.dist"]][pick,g,]
             }
-            for(g in 1:n.mark.years){
-              gg <- mark.years[g]
+            for(g in 1:n.mark.g){
+              gg <- mark.g[g]
               for(j in 1:J.mark[gg]){
                 mvSaved["pd",1][pick,gg,j] <<- model[["pd"]][pick,gg,j]
               }
             }
-            for(g in 1:n.sight.years){
-              gg <- sight.years[g]
+            for(g in 1:n.sight.g){
+              gg <- sight.g[g]
               for(j in 1:J.sight[gg]){
                 mvSaved["lam",1][pick,gg,j] <<- model[["lam"]][pick,gg,j]
               }
@@ -1417,14 +1417,14 @@ zSampler <- nimbleFunction(
               model[["avail.dist"]][pick,g,] <<- mvSaved["avail.dist",1][pick,g,]
               model[["use.dist"]][pick,g,] <<- mvSaved["use.dist",1][pick,g,]
             }
-            for(g in 1:n.mark.years){
-              gg <- mark.years[g]
+            for(g in 1:n.mark.g){
+              gg <- mark.g[g]
               for(j in 1:J.mark[gg]){
                 model[["pd"]][pick,gg,j] <<- mvSaved["pd",1][pick,gg,j]
               }
             }
-            for(g in 1:n.sight.years){
-              gg <- sight.years[g]
+            for(g in 1:n.sight.g){
+              gg <- sight.g[g]
               for(j in 1:J.sight[gg]){
                 model[["lam"]][pick,gg,j] <<- mvSaved["lam",1][pick,gg,j]
               }

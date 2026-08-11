@@ -68,60 +68,60 @@ NimModel <- nimbleCode({
     sigma[g] <- sigma.fixed #sigma fixed across primay occasions, shared across methods
   }
   #Marking process
-  for(g in 1:n.mark.years){
+  for(g in 1:n.mark.g){
     p0[g] ~ dunif(0,1)
     for(i in 1:M){
-      pd[i,mark.years[g],1:J.mark[mark.years[g]]] <- GetDetectionProb(
+      pd[i,mark.g[g],1:J.mark[mark.g[g]]] <- GetDetectionProb(
         s=s[i,1:2],
-        X=X.mark[mark.years[g],1:J.mark[mark.years[g]],1:2],
-        J=J.mark[mark.years[g]],
-        sigma=sigma[mark.years[g]],
+        X=X.mark[mark.g[g],1:J.mark[mark.g[g]],1:2],
+        J=J.mark[mark.g[g]],
+        sigma=sigma[mark.g[g]],
         p0=p0[g],
-        z=z[i,mark.years[g]],
+        z=z[i,mark.g[g]],
         z.super=z.super[i])
       
-      y.mark[i,mark.years[g],1:J.mark[mark.years[g]]] ~ dBinomialVector(
-        pd[i,mark.years[g],1:J.mark[mark.years[g]]],
-        K1D=K1D.mark[mark.years[g],1:J.mark[mark.years[g]]],
-        z=z[i,mark.years[g]],
+      y.mark[i,mark.g[g],1:J.mark[mark.g[g]]] ~ dBinomialVector(
+        pd[i,mark.g[g],1:J.mark[mark.g[g]]],
+        K1D=K1D.mark[mark.g[g],1:J.mark[mark.g[g]]],
+        z=z[i,mark.g[g]],
         z.super=z.super[i])
     }
   }
   
   #Sighting process
-  for(g in 1:n.sight.years){
+  for(g in 1:n.sight.g){
     lam0[g] ~ dunif(0,15)
     for(i in 1:M){
-      lam[i,sight.years[g],1:J.sight[sight.years[g]]] <- GetDetectionRate(
+      lam[i,sight.g[g],1:J.sight[sight.g[g]]] <- GetDetectionRate(
         s=s[i,1:2],
-        X=X.sight[sight.years[g],1:J.sight[sight.years[g]],1:2],
-        J=J.sight[sight.years[g]],
-        sigma=sigma[sight.years[g]],
+        X=X.sight[sight.g[g],1:J.sight[sight.g[g]],1:2],
+        J=J.sight[sight.g[g]],
+        sigma=sigma[sight.g[g]],
         lam0=lam0[g],
-        z=z[i,sight.years[g]],
+        z=z[i,sight.g[g]],
         z.super=z.super[i])
       
-      for(k in 1:K.sight[sight.years[g]]){
-        y.sight[i,sight.years[g],1:J.sight[sight.years[g]],k] ~ dPoissonVector(
-          lam[i,sight.years[g],1:J.sight[sight.years[g]]] *
-            K2D.sight[sight.years[g],1:J.sight[sight.years[g]],k],
-          z=z[i,sight.years[g]],
+      for(k in 1:K.sight[sight.g[g]]){
+        y.sight[i,sight.g[g],1:J.sight[sight.g[g]],k] ~ dPoissonVector(
+          lam[i,sight.g[g],1:J.sight[sight.g[g]]] *
+            K2D.sight[sight.g[g],1:J.sight[sight.g[g]],k],
+          z=z[i,sight.g[g]],
           z.super=z.super[i])
         
-        y.event[i,sight.years[g],1:J.sight[sight.years[g]],k,1:3] ~ dmultiOpen(
-          y.sight=y.sight[i,sight.years[g],1:J.sight[sight.years[g]],k],
-          mark.states=mark.states[i,sight.years[g],k],
+        y.event[i,sight.g[g],1:J.sight[sight.g[g]],k,1:3] ~ dmultiOpen(
+          y.sight=y.sight[i,sight.g[g],1:J.sight[sight.g[g]],k],
+          mark.states=mark.states[i,sight.g[g],k],
           theta.marked=theta.marked[1:3],
           theta.unmarked=theta.unmarked[1:3],
-          capcounts=capcounts[sight.years[g],i])
+          capcounts=capcounts[sight.g[g],i])
       }
     }
     
-    capcounts[sight.years[g],1:M] <- Getcapcounts(
-      ID=ID[sight.years[g],1:n.samples[sight.years[g]]],
-      capcounts.ID=capcounts.ID[sight.years[g],1:M])
+    capcounts[sight.g[g],1:M] <- Getcapcounts(
+      ID=ID[sight.g[g],1:n.samples[sight.g[g]]],
+      capcounts.ID=capcounts.ID[sight.g[g],1:M])
     
-    n.cap[sight.years[g]] <- Getncap(capcounts=capcounts[sight.years[g],1:M])
+    n.cap[sight.g[g]] <- Getncap(capcounts=capcounts[sight.g[g],1:M])
   }
   
   #Telemetry

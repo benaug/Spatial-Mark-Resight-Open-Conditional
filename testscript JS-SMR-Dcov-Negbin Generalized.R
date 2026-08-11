@@ -156,10 +156,10 @@ points(X.mark.all,pch=4,cex=1,lwd=2,col="darkred")
 #Mark/Telemetry settings - For now, we assume mark history is known and deaths observed if marked at time of death
 #this is a simplified scenario for using telemetry collars for marks
 n.tel.locs <- 15 #number of locs per individual
-mark.year.pars <- c(2,2,3) #parameters for truncated poisson: c(lambda, lower truncation, upper truncation)
+mark.g.pars <- c(2,2,3) #parameters for truncated poisson: c(lambda, lower truncation, upper truncation)
 #data simulator requires lower bound be 1 or higher. 1 means it fails before 2nd year
-#mark lifetime frequencies for mark.year.pars
-table(rtruncpois(10000,lambda=mark.year.pars[1],lower=mark.year.pars[2],upper=mark.year.pars[3]))/10000
+#mark lifetime frequencies for mark.g.pars
+table(rtruncpois(10000,lambda=mark.g.pars[1],lower=mark.g.pars[2],upper=mark.g.pars[3]))/10000
 #marking protocol: #1) never replace a mark if currently collared on capture 2) always replace
 mark.protocol <- 2 
 
@@ -171,7 +171,7 @@ data <- sim.JS.SMR.Dcov.Generalized(D.beta0=D.beta0,D.beta1=D.beta1,D.cov=D.cov,
             p0=p0,lam0=lam0,sigma=sigma,theta.d=theta.d,obsmod=obsmod,
             K.mark=K.mark,K.sight=K.sight,
             X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
-            mark.year.pars=mark.year.pars,mark.protocol=mark.protocol,
+            mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
             p.mark=p.mark,n.tel.locs=n.tel.locs)
 
 #what is observed data? Note data objects have all n.primarys with all 0 data if no effort for a method
@@ -348,10 +348,10 @@ for(g in 1:n.primary){
 }
 
 #these indicate in which year marking/sighting occurs and how many total sessions of each
-mark.years <- which(K.mark!=0)
-sight.years <- which(K.sight!=0)
-n.mark.years <- length(mark.years)
-n.sight.years <- length(sight.years)
+mark.g <- which(K.mark!=0)
+sight.g <- which(K.sight!=0)
+n.mark.g <- length(mark.g)
+n.sight.g <- length(sight.g)
 
 #constants for Nimble
 #might want to center D.cov here. Simulated D.cov in this testscript is already effectively centered.
@@ -360,15 +360,15 @@ constants <- list(n.primary=n.primary,M=M,J.mark=J.mark,J.sight=J.sight,xlim=xli
                   D.cov=D.cov,cellArea=cellArea,n.cells=n.cells,res=res,
                   n.tel.sessions=data$n.tel.sessions,tel.session=data$tel.session,max.n.tel.locs=max.n.tel.locs,
                   tel.ID=data$tel.ID,n.tel.inds=data$n.tel.inds,n.locs.ind=data$n.locs.ind,
-                  mark.years=mark.years,sight.years=sight.years,n.mark.years=n.mark.years,
-                  n.sight.years=n.sight.years,
+                  mark.g=mark.g,sight.g=sight.g,n.mark.g=n.mark.g,
+                  n.sight.g=n.sight.g,
                   n.samples=nimbuild$n.samples)
 #inits for Nimble
 Niminits <- list(N=nimbuild$N,N.survive=nimbuild$N.survive,N.recruit=nimbuild$N.recruit,
                  ER=nimbuild$N.recruit,N.super=nimbuild$N.super,z.super=nimbuild$z.super,
                  z=nimbuild$z,z.start=nimbuild$z.start,z.stop=nimbuild$z.stop,
                  s=nimbuild$s,phi.fixed=0.5,D0=nimbuild$N[1]/(sum(InSS)*res^2),D.beta1=0,
-                 p0=inits$p0[mark.years],lam0=inits$lam0[sight.years],
+                 p0=inits$p0[mark.g],lam0=inits$lam0[sight.g],
                  sigma.fixed=inits$sigma[1],theta.d.fixed=inits$theta.d[1],
                  y.sight=nimbuild$y.sight,y.event=nimbuild$y.event,ID=nimbuild$ID)
 
@@ -401,7 +401,7 @@ conf <- configureMCMC(Rmodel,monitors=parameters,thin=nt,
 conf$addSampler(target=paste0("y.sight[1:",M,",1:",n.primary,",1:",max(J.sight),"]"),
                 type='IDSamplerOpen',
                 control=list(M=M,J.sight=J.sight,n.primary=n.primary,
-                             n.sight.years=n.sight.years,sight.years=sight.years,
+                             n.sight.g=n.sight.g,sight.g=sight.g,
                              mark.states=nimbuild$mark.states,
                              event.type=nimbuild$event.type,
                              n.samples=nimbuild$n.samples,
@@ -427,9 +427,9 @@ calcNodes <- c(N.nodes,N.recruit.nodes,y.mark.nodes,y.sight.nodes,z.nodes,tel.z.
 conf$addSampler(target = c("z"),
                 type = 'zSampler',control = list(M=M,n.cap.all=n.cap.all,
                                                  n.primary=n.primary,J.mark=J.mark,J.sight=J.sight,
-                                                 mark.years=mark.years,sight.years=sight.years,
-                                                 n.mark.years=n.mark.years,
-                                                 n.sight.years=n.sight.years,
+                                                 mark.g=mark.g,sight.g=sight.g,
+                                                 n.mark.g=n.mark.g,
+                                                 n.sight.g=n.sight.g,
                                                  mark.states=nimbuild$mark.states,
                                                  tel.z.states=nimbuild$tel.z.states,
                                                  z.super.ups=z.super.ups,y2D=nimbuild$y2D,
