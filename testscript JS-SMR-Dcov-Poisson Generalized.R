@@ -375,7 +375,7 @@ Nimdata <- list(y.mark=nimbuild$y.mark, #marking process
                 X.mark=nimbuild$X.mark,X.sight=nimbuild$X.sight,locs=data$locs)
 
 # set parameters to monitor
-parameters <- c('N','gamma.fixed','N.recruit','N.survive','N.super','lambda.y1',
+parameters <- c('N','gamma','N.recruit','N.survive','N.super','lambda.y1',
                 'phi.fixed','p0','lam0','sigma.fixed','theta.marked','theta.unmarked',
                 'D0','D.beta1','n.cap')
 nt <- 1 #thinning rate
@@ -384,7 +384,7 @@ nt2 <- 5
 # Build the model, configure the mcmc, and compile
 start.time <- Sys.time()
 Rmodel <- nimbleModel(code=NimModel, constants=constants, data=Nimdata,check=FALSE,inits=Niminits)
-config.nodes <- c('phi.fixed','gamma.fixed','p0','lam0','sigma.fixed','theta.marked','theta.unmarked[2:3]')
+config.nodes <- c('phi.fixed','gamma','p0','lam0','sigma.fixed','theta.marked','theta.unmarked[2:3]')
 conf <- configureMCMC(Rmodel,monitors=parameters,thin=nt,
                       monitors2=parameters2,thin2=nt2,
                       nodes=config.nodes)
@@ -456,6 +456,19 @@ for(i in 1:M){
 #   conf$addSampler(target = c(paste("lam0[",g,"]"),paste("sigma[",g,"]")),
 #                   type = 'RW_block',control=list(adaptive=TRUE),silent = TRUE)
 # }
+
+#optional truncated gamma poisson conjugate samplers. 
+#I would always use these as long as you keep uniform priors on gamma or gamma[g]
+#Typically gives you much greater ESS that propagates to N/N.recruit
+#if one gamma per primary occasion
+# for(g in 1:(n.primary-1)){
+#   target <- paste0("gamma[",g,"]")
+#   conf$removeSamplers(target)
+#   conf$addSampler(target=target,type=truncGammaPoisSampler)
+# }
+# #if gamma is fixed
+conf$removeSamplers("gamma")
+conf$addSampler(target="gamma",type=truncGammaPoisSampler)
 
 conf$addSampler(target = c("D0","D.beta1"),
                 type = 'AF_slice',control=list(adaptive=TRUE),silent = TRUE)
