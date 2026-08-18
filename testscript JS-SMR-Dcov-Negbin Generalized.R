@@ -2,8 +2,8 @@ library(nimble)
 library(coda)
 source("sim.JS.SMR.Dcov.Generalized.R")
 source("init.SMR.Dcov.Open.Generalized.R")
-source("Nimble Model JS-SMR-Dcov-Negbin Generalized.R")
-source("Nimble Functions JS-SMR-Dcov-Negbin Generalized.R") #contains custom distributions and updates
+source("Nimble Model JS-SMR-Dcov-Negbin Generalized V2.R")
+source("Nimble Functions JS-SMR-Dcov-Negbin Generalized V2.R") #contains custom distributions and updates
 source("sSampler Dcov Open Conditional Generalized.R") # activity center sampler that proposes from prior when z.super=0.
 source("mask.check.R")
 #must run this line 
@@ -166,13 +166,13 @@ mark.protocol <- 2
 # simulate some data
 set.seed(390298) #change seed for new data set
 data <- sim.JS.SMR.Dcov.Generalized(D.beta0=D.beta0,D.beta1=D.beta1,D.cov=D.cov,
-            InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,
-            theta.marked=theta.marked,theta.unmarked=theta.unmarked,
-            p0=p0,lam0=lam0,sigma=sigma,theta.d=theta.d,obsmod=obsmod,
-            K.mark=K.mark,K.sight=K.sight,
-            X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
-            mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
-            p.mark=p.mark,n.tel.locs=n.tel.locs)
+                                    InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,
+                                    theta.marked=theta.marked,theta.unmarked=theta.unmarked,
+                                    p0=p0,lam0=lam0,sigma=sigma,theta.d=theta.d,obsmod=obsmod,
+                                    K.mark=K.mark,K.sight=K.sight,
+                                    X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
+                                    mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
+                                    p.mark=p.mark,n.tel.locs=n.tel.locs)
 
 #what is observed data? Note data objects have all n.primarys with all 0 data if no effort for a method
 #Could be structured without years with no effort, but that would require more work changing custom
@@ -397,7 +397,7 @@ conf <- configureMCMC(Rmodel,monitors=parameters,thin=nt,
                       monitors2=parameters2,thin2=nt2,
                       nodes=config.nodes)
 
-#Add y.sight/y.event/ID update
+#Add y.sight/y.event/ID update FIRST. This changes capcounts; the following zSampler rebuilds z.obs from the current allocation each MCMC iteration.
 conf$addSampler(target=paste0("y.sight[1:",M,",1:",n.primary,",1:",max(J.sight),"]"),
                 type='IDSamplerOpen',
                 control=list(M=M,J.sight=J.sight,n.primary=n.primary,
@@ -425,17 +425,16 @@ z.nodes <- Rmodel$expandNodeNames(paste0("z[1:",M,",1]"))
 tel.z.states.nodes <- Rmodel$expandNodeNames(paste0("tel.z.states[1:",M,",1]"))
 calcNodes <- c(N.nodes,N.recruit.nodes,y.mark.nodes,y.sight.nodes,z.nodes,tel.z.states.nodes) #the ones that need likelihoods updated in mvSaved
 conf$addSampler(target = c("z"),
-                type = 'zSampler',control = list(M=M,n.cap.all=n.cap.all,
+                type = 'zSampler',control = list(M=M,
                                                  n.primary=n.primary,J.mark=J.mark,J.sight=J.sight,
                                                  mark.g=mark.g,sight.g=sight.g,
                                                  n.mark.g=n.mark.g,
                                                  n.sight.g=n.sight.g,
-                                                 mark.states=nimbuild$mark.states,
-                                                 tel.z.states=nimbuild$tel.z.states,
-                                                 z.super.ups=z.super.ups,y2D=nimbuild$y2D,
+                                                 tel.z.states.nodes=tel.z.states.nodes,
+                                                 z.super.ups=z.super.ups,y2D=nimbuild$y2D, #fixed evidence only; latent-ID detections are added dynamically from capcounts
                                                  y.mark.nodes=y.mark.nodes,pd.nodes=pd.nodes,
                                                  y.sight.nodes=y.sight.nodes,
-                                                 lam.nodes=lam.nodes,tel.z.states.nodes=tel.z.states.nodes,
+                                                 lam.nodes=lam.nodes,
                                                  N.nodes=N.nodes,z.nodes=z.nodes,ER.nodes=ER.nodes,
                                                  N.survive.nodes=N.survive.nodes,
                                                  N.recruit.nodes=N.recruit.nodes,

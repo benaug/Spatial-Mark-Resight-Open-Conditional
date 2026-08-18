@@ -13,7 +13,7 @@ NimModel <- nimbleCode({
   lambda.y1 <- D.intercept*pi.denom #Expected starting population size
   N[1] ~ dpois(lambda.y1) #Realized starting population size
   for(g in 2:n.primary){
-    N[g] <- N.survive[g-1] + N.recruit[g-1] #bundance by primary occasion
+    N[g] <- N.survive[g-1] + N.recruit[g-1] #abundance by primary occasion
     #N.recruit and N.survive information also contained in z/z.start + z.stop
     #N.recruit has distributions assigned below, but survival distributions defined on z
   }
@@ -137,7 +137,6 @@ NimModel <- nimbleCode({
   }
 })
 
-#custom updates:
-#1) for marked individuals: update z.start, then update z.stop
-#2) for unmarked individuals: update entire z vectors
-#3) N.super/z.super update 
+#1) detected individuals: update z.start, then z.stop
+#2) currently undetected individuals in the superpopulation: update entire z vectors
+#3) N.super/z.super update among currently undetected individuals

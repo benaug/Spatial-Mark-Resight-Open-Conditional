@@ -179,13 +179,13 @@ mark.protocol <- 2
 # simulate some data
 set.seed(390298) #change seed for new data set
 data <- sim.JS.SMR.Dcov.Generalized.Interspersed(D.beta0=D.beta0,D.beta1=D.beta1,D.cov=D.cov,
-            InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,K.order=K.order,
-            theta.marked=theta.marked,theta.unmarked=theta.unmarked,
-            p0=p0,lam0=lam0,theta.d=theta.d,sigma=sigma,obsmod=obsmod,
-            K.mark=K.mark,K.sight=K.sight,
-            X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
-            mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
-            p.mark=p.mark,n.tel.locs=n.tel.locs)
+                                                 InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,K.order=K.order,
+                                                 theta.marked=theta.marked,theta.unmarked=theta.unmarked,
+                                                 p0=p0,lam0=lam0,theta.d=theta.d,sigma=sigma,obsmod=obsmod,
+                                                 K.mark=K.mark,K.sight=K.sight,
+                                                 X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
+                                                 mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
+                                                 p.mark=p.mark,n.tel.locs=n.tel.locs)
 table(data$truth$y) #i x j detection counts summed over occasions. looking to see if theta.d produces plausible counts
 #easier to assess at i x j x k level, but data simulator currently does not store k dimension
 
@@ -408,8 +408,39 @@ conf <- configureMCMC(Rmodel,monitors=parameters,thin=nt,
                       monitors2=parameters2,thin2=nt2,
                       nodes=config.nodes)
 
-#Add y.sight/y.event/ID update
-conf$addSampler(target=Rmodel$expandNodeNames(paste("y.sight[1:",M,",1:",n.primary,",1:",max(J.sight),",1:",max(K.sight),"]")),
+#add N/z sampler
+z.super.ups <- round(M*0.25) #how many z.super update proposals per iteration?
+#25% of M seems reasonable, but optimal will depend on data set
+y.mark.nodes <- Rmodel$expandNodeNames(paste0("y.mark[1:",M,",1:",n.primary,",1:",max(J.mark),"]"))
+pd.nodes <- Rmodel$expandNodeNames(paste0("pd[1:",M,",1:",n.primary,",1:",max(J.mark),"]"))
+lam.nodes <- Rmodel$expandNodeNames(paste0("lam[1:",M,",1:",n.primary,",1:",max(J.sight),"]"))
+
+#One stochastic y.sight vector node for every individual x sighting occasion k.
+#Build explicitly because NIMBLE's flattened node order is not the non-interspersed order.
+y.sight.nodes <- c()
+sight.node.start <- integer(n.sight.g)
+for(g2 in 1:n.sight.g){
+  gg <- sight.g[g2]
+  sight.node.start[g2] <- length(y.sight.nodes)+1L
+  for(i in 1:M){
+    for(k in 1:K.sight[gg]){
+      y.sight.tmp <- Rmodel$expandNodeNames(paste0("y.sight[",i,",",gg,",1:",J.sight[gg],",",k,"]"))
+      if(length(y.sight.tmp)!=1) stop("Expected one y.sight vector node per individual and sighting occasion.")
+      y.sight.nodes <- c(y.sight.nodes,y.sight.tmp)
+    }
+  }
+}
+
+N.nodes <- Rmodel$expandNodeNames("N")
+N.survive.nodes <- Rmodel$expandNodeNames(paste0("N.survive[1:",n.primary-1,"]"))
+N.recruit.nodes <- Rmodel$expandNodeNames(paste0("N.recruit[1:",n.primary-1,"]"))
+ER.nodes <- Rmodel$expandNodeNames(paste0("ER[1:",n.primary-1,"]"))
+z.nodes <- Rmodel$expandNodeNames(paste0("z[1:",M,",1]"))
+tel.z.states.nodes <- Rmodel$expandNodeNames(paste0("tel.z.states[1:",M,",1]"))
+calcNodes <- c(N.nodes,N.recruit.nodes,y.mark.nodes,y.sight.nodes,z.nodes,tel.z.states.nodes)
+
+#Update y.sight/y.event/ID first. capcounts is therefore current when zSampler rebuilds y.req.
+conf$addSampler(target=y.sight.nodes,
                 type='IDSamplerOpen',
                 control=list(M=M,J.sight=J.sight,K.sight=K.sight,n.primary=n.primary,
                              n.sight.g=n.sight.g,sight.g=sight.g,
@@ -420,39 +451,17 @@ conf$addSampler(target=Rmodel$expandNodeNames(paste("y.sight[1:",M,",1:",n.prima
                              match=nimbuild$match),
                 silent=TRUE)
 
-
-#add N/z sampler
-z.super.ups <- round(M*0.25) #how many z.super update proposals per iteration?
-#25% of M seems reasonable, but optimal will depend on data set
-y.mark.nodes <- Rmodel$expandNodeNames(paste0("y.mark[1:",M,",1:",n.primary,",1:",max(J.mark),"]"))
-y.sight.nodes <- Rmodel$expandNodeNames(paste("y.sight[1:",M,",1:",n.primary,",1:",max(J.sight),",1:",max(K.sight),"]"))
-pd.nodes <- Rmodel$expandNodeNames(paste0("pd[1:",M,",1:",n.primary,",1:",max(J.mark),"]"))
-lam.nodes <- Rmodel$expandNodeNames(paste0("lam[1:",M,",1:",n.primary,",1:",max(J.sight),"]"))
-N.nodes <- Rmodel$expandNodeNames(paste0("N"))
-N.survive.nodes <- Rmodel$expandNodeNames(paste0("N.survive[1:",n.primary-1,"]"))
-N.recruit.nodes <- Rmodel$expandNodeNames(paste0("N.recruit[1:",n.primary-1,"]"))
-ER.nodes <- Rmodel$expandNodeNames(paste0("ER[1:",n.primary-1,"]"))
-z.nodes <- Rmodel$expandNodeNames(paste0("z[1:",M,",1]"))
-tel.z.states.nodes <- Rmodel$expandNodeNames(paste0("tel.z.states[1:",M,",1]"))
-calcNodes <- c(N.nodes,N.recruit.nodes,y.mark.nodes,y.sight.nodes,z.nodes,tel.z.states.nodes) #the ones that need likelihoods updated in mvSaved
-conf$addSampler(target = c("z"),
-                type = 'zSampler',control = list(M=M,n.cap.all=n.cap.all,
-                                                 n.primary=n.primary,J.mark=J.mark,
-                                                 J.sight=J.sight,K.sight=K.sight,
-                                                 mark.g=mark.g,sight.g=sight.g,
-                                                 n.mark.g=n.mark.g,
-                                                 n.sight.g=n.sight.g,
-                                                 mark.states=nimbuild$mark.states,
-                                                 tel.z.states=nimbuild$tel.z.states,
-                                                 tel.z.states.nodes=tel.z.states.nodes,
-                                                 z.super.ups=z.super.ups,y2D=nimbuild$y2D,
-                                                 y.mark.nodes=y.mark.nodes,pd.nodes=pd.nodes,
-                                                 y.sight.nodes=y.sight.nodes,
-                                                 lam.nodes=lam.nodes,
-                                                 N.nodes=N.nodes,z.nodes=z.nodes,ER.nodes=ER.nodes,
-                                                 N.survive.nodes=N.survive.nodes,
-                                                 N.recruit.nodes=N.recruit.nodes,
-                                                 calcNodes=calcNodes), silent = TRUE)
+conf$addSampler(target=c("z"),
+                type='zSampler',control=list(M=M,n.primary=n.primary,J.mark=J.mark,J.sight=J.sight,K.sight=K.sight,
+                                             mark.g=mark.g,sight.g=sight.g,n.mark.g=n.mark.g,n.sight.g=n.sight.g,
+                                             tel.z.states.nodes=tel.z.states.nodes,
+                                             z.super.ups=z.super.ups,y2D=nimbuild$y2D, #fixed evidence; current latent-ID allocations are added from capcounts
+                                             y.mark.nodes=y.mark.nodes,pd.nodes=pd.nodes,
+                                             y.sight.nodes=y.sight.nodes,sight.node.start=sight.node.start,
+                                             lam.nodes=lam.nodes,
+                                             N.nodes=N.nodes,z.nodes=z.nodes,ER.nodes=ER.nodes,
+                                             N.survive.nodes=N.survive.nodes,N.recruit.nodes=N.recruit.nodes,
+                                             calcNodes=calcNodes),silent=TRUE)
 
 #activity center sampler. This sampler tunes activity center MH proposals when z.super[i]=1 and
 #draws from the prior otherwise.
@@ -475,7 +484,7 @@ for(i in 1:M){
 # for(g in 1:n.primary){
 #   conf$addSampler(target = c(paste("lam0[",g,"]"),paste("sigma[",g,"]")),
 #                   type = 'RW_block',control=list(adaptive=TRUE),silent = TRUE)
-# }``
+# }
 
 #optional truncated gamma poisson conjugate samplers. 
 #I would always use these as long as you keep uniform priors on gamma or gamma[g]
@@ -517,8 +526,6 @@ data$N.survive
 data$N[1] + sum(data$N.recruit) #N.super
 data$n.cap #number of individuals detected in sighting data in each year
 
-Cmodel$getLogProb()
-Cmodel$calculate()
 
 #check posterior correlations, removing things we can't improve
 rem.idx <- c(grep("N",colnames(mvSamples)),
@@ -544,3 +551,4 @@ mtext("marks deployed",3,at=0,line=1)
 mtext(marks.deployed,3,at=1:n.primary,line=1)
 mtext("marks active",3,at=0,line=0)
 mtext(marks.active,3,at=1:n.primary,line=0)
+

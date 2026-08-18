@@ -171,13 +171,13 @@ mark.protocol <- 2
 # simulate some data
 set.seed(390298) #change seed for new data set
 data <- sim.JS.SMR.Dcov.mobileAC.Generalized(D.beta0=D.beta0,D.beta1=D.beta1,D.cov=D.cov,
-            InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,
-            theta.marked=theta.marked,theta.unmarked=theta.unmarked,
-            p0=p0,lam0=lam0,theta.d=theta.d,sigma=sigma,sigma.move=sigma.move,rsf.beta=rsf.beta,
-            obsmod=obsmod,K.mark=K.mark,K.sight=K.sight,
-            X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
-            mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
-            p.mark=p.mark,n.tel.locs=n.tel.locs)
+                                             InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,
+                                             theta.marked=theta.marked,theta.unmarked=theta.unmarked,
+                                             p0=p0,lam0=lam0,theta.d=theta.d,sigma=sigma,sigma.move=sigma.move,rsf.beta=rsf.beta,
+                                             obsmod=obsmod,K.mark=K.mark,K.sight=K.sight,
+                                             X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
+                                             mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
+                                             p.mark=p.mark,n.tel.locs=n.tel.locs)
 
 #what is observed data? Note data objects have all n.primarys with all 0 data if no effort for a method
 #Could be structured without years with no effort, but that would require more work changing custom
@@ -505,15 +505,13 @@ tel.z.states.nodes <- Rmodel$expandNodeNames(paste0("tel.z.states[1:",M,",1]"))
 calcNodes <- c(N.nodes,N.recruit.nodes,y.mark.nodes,y.sight.nodes,s.nodes,z.nodes,tel.z.states.nodes) #the ones that need likelihoods updated in mvSaved
 cells.double <- matrix(as.double(cells),n.cells.x,n.cells.y)
 conf$addSampler(target = c("z"),
-                type = 'zSampler',control = list(M=M,n.cap.all=n.cap.all,
+                type = 'zSampler',control = list(M=M,
                                                  n.primary=n.primary,J.mark=J.mark,J.sight=J.sight,
                                                  mark.g=mark.g,sight.g=sight.g,
                                                  n.mark.g=n.mark.g,n.sight.g=n.sight.g,
                                                  cells=cells.double,dSS=dSS,res=res,n.cells=n.cells,
                                                  xlim=xlim,ylim=ylim,x.vals=x.vals,y.vals=y.vals,
                                                  n.cells.x=n.cells.x,n.cells.y=n.cells.y,
-                                                 mark.states=nimbuild$mark.states,
-                                                 tel.z.states=nimbuild$tel.z.states,
                                                  tel.z.states.nodes=tel.z.states.nodes,
                                                  z.super.ups=z.super.ups,y2D=nimbuild$y2D,
                                                  y.mark.nodes=y.mark.nodes,pd.nodes=pd.nodes,

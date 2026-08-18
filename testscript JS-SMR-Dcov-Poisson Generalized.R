@@ -417,13 +417,11 @@ z.nodes <- Rmodel$expandNodeNames(paste0("z[1:",M,",1]"))
 tel.z.states.nodes <- Rmodel$expandNodeNames(paste0("tel.z.states[1:",M,",1]"))
 calcNodes <- c(N.nodes,N.recruit.nodes,y.mark.nodes,y.sight.nodes,z.nodes,tel.z.states.nodes) #the ones that need likelihoods updated in mvSaved
 conf$addSampler(target = c("z"),
-                type = 'zSampler',control = list(M=M,n.cap.all=n.cap.all,
+                type = 'zSampler',control = list(M=M,
                                                  n.primary=n.primary,J.mark=J.mark,J.sight=J.sight,
                                                  mark.g=mark.g,sight.g=sight.g,
                                                  n.mark.g=n.mark.g,
                                                  n.sight.g=n.sight.g,
-                                                 mark.states=nimbuild$mark.states,
-                                                 tel.z.states=nimbuild$tel.z.states,
                                                  tel.z.states.nodes=tel.z.states.nodes,
                                                  z.super.ups=z.super.ups,y2D=nimbuild$y2D,
                                                  y.mark.nodes=y.mark.nodes,pd.nodes=pd.nodes,
@@ -496,7 +494,6 @@ data$N.recruit
 data$N.survive
 data$N[1] + sum(data$N.recruit) #N.super
 data$n.cap #number of individuals detected in sighting data in each year
-
 
 #check posterior correlations, removing things we can't improve
 rem.idx <- c(grep("N",colnames(mvSamples)),
