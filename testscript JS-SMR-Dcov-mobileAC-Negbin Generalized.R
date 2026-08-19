@@ -86,11 +86,13 @@ buff <- 3 #state space buffer around traps
 X.both <- vector("list",n.primary)
 for(g in 1:n.primary){
   X.both[[g]] <- rbind(X.mark[[g]],X.sight[[g]])
-  xlim[g,] <- range(X.both[[g]][,1]) + c(-buff,buff)
-  ylim[g,] <- range(X.both[[g]][,2]) + c(-buff,buff)
+  if(nrow(X.both[[g]])>0){
+    xlim[g,] <- range(X.both[[g]][,1]) + c(-buff,buff)
+    ylim[g,] <- range(X.both[[g]][,2]) + c(-buff,buff)
+  }
 }
-xlim <- c(min(xlim[,1]),max(xlim[,2]))
-ylim <- c(min(ylim[,1]),max(ylim[,2]))
+xlim <- c(min(xlim[,1],na.rm=TRUE),max(xlim[,2],na.rm=TRUE))
+ylim <- c(min(ylim[,1],na.rm=TRUE),max(ylim[,2],na.rm=TRUE))
 
 #shift X, xlim, ylim, so lower left side of state space is (0,0)
 #this is required to use efficient look-up table to find the cell number
@@ -706,3 +708,4 @@ mtext("marks deployed",3,at=0,line=1)
 mtext(marks.deployed,3,at=1:n.primary,line=1)
 mtext("marks active",3,at=0,line=0)
 mtext(marks.active,3,at=1:n.primary,line=0)
+

@@ -12,14 +12,14 @@ rtruncpois <- function(n,lambda,lower=0,upper=Inf){
 }
 
 sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
-                            phi=NA,gamma=NA,n.primary=NA,
-                            theta.marked=NA,theta.unmarked=NA,
-                            K.mark=NA,K.sight=NA,K1D.mark=NA,K1D.sight=NA,
-                            p0=NA,lam0=NA,sigma=NA,theta.d=NA,obsmod="poisson",
-                            X.mark=NA,X.sight=NA,buff=buff,xlim=NA,
-                            ylim=NA,res=NA,
-                            mark.g.pars=NA,mark.protocol=NA,
-                            n.tel.locs=NA,p.mark=NA){
+                                        phi=NA,gamma=NA,n.primary=NA,
+                                        theta.marked=NA,theta.unmarked=NA,
+                                        K.mark=NA,K.sight=NA,K1D.mark=NA,K1D.sight=NA,
+                                        p0=NA,lam0=NA,sigma=NA,theta.d=NA,obsmod="poisson",
+                                        X.mark=NA,X.sight=NA,buff=buff,xlim=NA,
+                                        ylim=NA,res=NA,
+                                        mark.g.pars=NA,mark.protocol=NA,
+                                        n.tel.locs=NA,p.mark=NA){
   
   J.mark <- J.sight <- rep(NA,n.primary)
   for(g in 1:n.primary){
@@ -75,7 +75,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   lambda.cell <- InSS*exp(D.beta0 + D.beta1*D.cov)*cellArea
   lambda.y1 <- sum(lambda.cell)
   N[1] <- rpois(1,lambda.y1)
-
+  
   #recreate some Dcov things so we can pass fewer arguments into this function
   x.vals <- seq(xlim[1]+res/2,xlim[2]-res/2,res) #x cell centroids
   y.vals <- seq(ylim[1]+res/2,ylim[2]-res/2,res) #y cell centroids
@@ -84,7 +84,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   n.cells <- nrow(dSS)
   n.cells.x <- length(x.vals)
   n.cells.y <- length(y.vals)
-
+  
   #Easiest to increase dimension of z as we simulate bc size not known in advance.
   z <- matrix(0,N[1],n.primary)
   z[1:N[1],1] <- 1
@@ -104,10 +104,10 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
     N.survive[g-1] <- sum(z[,g-1]==1&z[,g]==1)
     N[g] <- N.recruit[g-1]+N.survive[g-1]
   }
-
+  
   if(any(N.recruit+N.survive!=N[2:n.primary]))stop("Simulation bug")
   if(any(colSums(z)!=N))stop("Simulation bug")
-
+  
   z.start <- apply(z,1,function(x){which(x==1)[1]})
   z.stop <- n.primary-apply(z,1,function(x){which(rev(x)==1)[1]})+1
   
@@ -117,7 +117,7 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
   K.mark.max <- max(K.mark)
   J.sight.max <- max(J.sight)
   K.sight.max <- max(K.sight)
-
+  
   #simulate activity centers - fixed through time
   N.super <- nrow(z)
   # simulate a population of activity centers
@@ -171,10 +171,10 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
     }
   }
   if(sum(y)==0)stop("No individuals resighted. Reconsider parameter settings.")
-
+  
   #store true data for debugging
   truth <- list(y.mark=y.mark,y=y,N=N,N.recruit=N.recruit,N.survive=N.survive,z=z,s=s)
-
+  
   #mark/telemetry data
   #deploy collars to individuals captured in marking process
   mark.caps <- 1*apply(y.mark,c(1,2),sum)
@@ -235,11 +235,13 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
     if(J.sight[g]>0){ #skip if no effort in this primary occasion
       #loop over cells with positive counts
       idx <- which(y[,g,]>0,arr.ind=TRUE)
-      for(l in 1:nrow(idx)){
-        if(mark.states[idx[l,1],g]==1){ #if marked
-          y.event[idx[l,1],g,idx[l,2],] <- rmultinom(1,y[idx[l,1],g,idx[l,2]],theta.marked)
-        }else{#if unmarked
-          y.event[idx[l,1],g,idx[l,2],] <- rmultinom(1,y[idx[l,1],g,idx[l,2]],c(0,theta.unmarked,1-theta.unmarked))
+      if(nrow(idx)>0){
+        for(l in seq_len(nrow(idx))){
+          if(mark.states[idx[l,1],g]==1){ #if marked
+            y.event[idx[l,1],g,idx[l,2],] <- rmultinom(1,y[idx[l,1],g,idx[l,2]],theta.marked)
+          }else{#if unmarked
+            y.event[idx[l,1],g,idx[l,2],] <- rmultinom(1,y[idx[l,1],g,idx[l,2]],c(0,theta.unmarked,1-theta.unmarked))
+          }
         }
       }
       marked.inds <- which(mark.states[,g]==1)
@@ -360,3 +362,4 @@ sim.JS.SMR.Dcov.Generalized <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
               D.cov=D.cov,InSS=InSS,res=res,cellArea=cellArea,N=N,lambda.y1=lambda.y1,
               truth=truth))
 }
+

@@ -80,11 +80,13 @@ buff <- 2 #state space buffer around traps
 X.both <- vector("list",n.primary)
 for(g in 1:n.primary){
   X.both[[g]] <- rbind(X.mark[[g]],X.sight[[g]])
-  xlim[g,] <- range(X.both[[g]][,1]) + c(-buff,buff)
-  ylim[g,] <- range(X.both[[g]][,2]) + c(-buff,buff)
+  if(nrow(X.both[[g]])>0){
+    xlim[g,] <- range(X.both[[g]][,1]) + c(-buff,buff)
+    ylim[g,] <- range(X.both[[g]][,2]) + c(-buff,buff)
+  }
 }
-xlim <- c(min(xlim[,1]),max(xlim[,2]))
-ylim <- c(min(ylim[,1]),max(ylim[,2]))
+xlim <- c(min(xlim[,1],na.rm=TRUE),max(xlim[,2],na.rm=TRUE))
+ylim <- c(min(ylim[,1],na.rm=TRUE),max(ylim[,2],na.rm=TRUE))
 
 #shift X, xlim, ylim, so lower left side of state space is (0,0)
 #this is required to use efficient look-up table to find the cell number
@@ -165,13 +167,13 @@ mark.protocol <- 2
 # simulate some data
 set.seed(390298) #change seed for new data set
 data <- sim.JS.SMR.Dcov.Generalized(D.beta0=D.beta0,D.beta1=D.beta1,D.cov=D.cov,
-            InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,
-            theta.marked=theta.marked,theta.unmarked=theta.unmarked,
-            p0=p0,lam0=lam0,sigma=sigma,obsmod=obsmod,
-            K.mark=K.mark,K.sight=K.sight,
-            X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
-            mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
-            p.mark=p.mark,n.tel.locs=n.tel.locs)
+                                    InSS=InSS,phi=phi,gamma=gamma,n.primary=n.primary,
+                                    theta.marked=theta.marked,theta.unmarked=theta.unmarked,
+                                    p0=p0,lam0=lam0,sigma=sigma,obsmod=obsmod,
+                                    K.mark=K.mark,K.sight=K.sight,
+                                    X.mark=X.mark,X.sight=X.sight,xlim=xlim,ylim=ylim,res=res,
+                                    mark.g.pars=mark.g.pars,mark.protocol=mark.protocol,
+                                    p.mark=p.mark,n.tel.locs=n.tel.locs)
 
 #what is observed data? Note data objects have all n.primarys with all 0 data if no effort for a method
 #Could be structured without years with no effort, but that would require more work changing custom
@@ -317,26 +319,28 @@ for(g in 1:n.primary){
   points(data$X.sight[[g]],pch=4,lwd=2)
   points(data$X.mark[[g]],pch=4,lwd=2,col="darkred")
   points(nimbuild$s[nimbuild$z[,g]==1,1],nimbuild$s[nimbuild$z[,g]==1,2],pch=16) #initialized activity centers
-  for(i in 1:n.marked[g]){
-    id <- nimbuild$ID.marked[i,g]
-    traps <- matrix(numeric(0),nrow=0,ncol=2)
-    if(J.sight[g]>0){
-      trapcaps <- which(nimbuild$y.mID[id,g,1:J.sight[g]]>0)
-      if(length(trapcaps)>0){
-        traps <- rbind(traps,nimbuild$X.sight[g,trapcaps,1:2])
+  if(n.marked[g]>0){
+    for(i in seq_len(n.marked[g])){
+      id <- nimbuild$ID.marked[i,g]
+      traps <- matrix(numeric(0),nrow=0,ncol=2)
+      if(J.sight[g]>0){
+        trapcaps <- which(nimbuild$y.mID[id,g,1:J.sight[g]]>0)
+        if(length(trapcaps)>0){
+          traps <- rbind(traps,nimbuild$X.sight[g,trapcaps,1:2])
+        }
       }
-    }
-    if(J.mark[g]>0){
-      trapcaps2 <- which(nimbuild$y.mark[id,g,1:J.mark[g]]>0)
-      if(length(trapcaps2)>0){
-        traps <- rbind(traps,nimbuild$X.mark[g,trapcaps2,1:2])
+      if(J.mark[g]>0){
+        trapcaps2 <- which(nimbuild$y.mark[id,g,1:J.mark[g]]>0)
+        if(length(trapcaps2)>0){
+          traps <- rbind(traps,nimbuild$X.mark[g,trapcaps2,1:2])
+        }
       }
-    }
-    s <- nimbuild$s[nimbuild$ID.marked[i,g],]
-    points(s[1],s[2],col="goldenrod",pch=16)
-    if(nrow(traps)>0){
-      for(j in 1:nrow(traps)){
-        lines(x=c(s[1],traps[j,1]),y=c(s[2],traps[j,2]),col="goldenrod")
+      s <- nimbuild$s[nimbuild$ID.marked[i,g],]
+      points(s[1],s[2],col="goldenrod",pch=16)
+      if(nrow(traps)>0){
+        for(j in 1:nrow(traps)){
+          lines(x=c(s[1],traps[j,1]),y=c(s[2],traps[j,2]),col="goldenrod")
+        }
       }
     }
   }

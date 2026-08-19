@@ -12,18 +12,18 @@ rtruncpois <- function(n,lambda,lower=0,upper=Inf){
 }
 
 sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,
-                            phi=NA,gamma=NA,n.primary=NA,K.order=NA,
-                            theta.marked=NA,theta.unmarked=NA,
-                            K.mark=NA,K.sight=NA,K1D.mark=NA,K2D.sight=NA,
-                            p0=NA,lam0=NA,sigma=NA,theta.d=NA,obsmod="poisson",
-                            X.mark=NA,X.sight=NA,buff=buff,xlim=NA,
-                            ylim=NA,res=NA,
-                            mark.g.pars=NA,mark.protocol=NA,
-                            n.tel.locs=NA,p.mark=NA){
+                                                     phi=NA,gamma=NA,n.primary=NA,K.order=NA,
+                                                     theta.marked=NA,theta.unmarked=NA,
+                                                     K.mark=NA,K.sight=NA,K1D.mark=NA,K2D.sight=NA,
+                                                     p0=NA,lam0=NA,sigma=NA,theta.d=NA,obsmod="poisson",
+                                                     X.mark=NA,X.sight=NA,buff=buff,xlim=NA,
+                                                     ylim=NA,res=NA,
+                                                     mark.g.pars=NA,mark.protocol=NA,
+                                                     n.tel.locs=NA,p.mark=NA){
   
   #check K.order
-  if(is.na(K.order[1])){
-    stop("Must supply K.order")
+  if(!is.list(K.order)){
+    stop("Must supply K.order as a list")
   }
   if(length(K.order)!=n.primary)stop("K.order must be of length N.session")
   if(!all(c("M","S")%in%names(table(unlist(K.order))))|!all(names(table(unlist(K.order)))%in%c("M","S"))){
@@ -96,7 +96,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   lambda.cell <- InSS*exp(D.beta0 + D.beta1*D.cov)*cellArea
   lambda.y1 <- sum(lambda.cell)
   N[1] <- rpois(1,lambda.y1)
-
+  
   #recreate some Dcov things so we can pass fewer arguments into this function
   x.vals <- seq(xlim[1]+res/2,xlim[2]-res/2,res) #x cell centroids
   y.vals <- seq(ylim[1]+res/2,ylim[2]-res/2,res) #y cell centroids
@@ -105,7 +105,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   n.cells <- nrow(dSS)
   n.cells.x <- length(x.vals)
   n.cells.y <- length(y.vals)
-
+  
   #Easiest to increase dimension of z as we simulate bc size not known in advance.
   z <- matrix(0,N[1],n.primary)
   z[1:N[1],1] <- 1
@@ -125,10 +125,10 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
     N.survive[g-1] <- sum(z[,g-1]==1&z[,g]==1)
     N[g] <- N.recruit[g-1]+N.survive[g-1]
   }
-
+  
   if(any(N.recruit+N.survive!=N[2:n.primary]))stop("Simulation bug")
   if(any(colSums(z)!=N))stop("Simulation bug")
-
+  
   z.start <- apply(z,1,function(x){which(x==1)[1]})
   z.stop <- n.primary-apply(z,1,function(x){which(rev(x)==1)[1]})+1
   
@@ -137,7 +137,7 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   K.mark.max <- max(K.mark)
   J.sight.max <- max(J.sight)
   K.sight.max <- max(K.sight)
-
+  
   #simulate activity centers - fixed through time
   N.super <- nrow(z)
   # simulate a population of activity centers
@@ -202,10 +202,10 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
     }
   }
   if(sum(y)==0)stop("No individuals resighted. Reconsider parameter settings.")
-
+  
   #store true data for debugging
   truth <- list(y.mark=y.mark,y=y,N=N,N.recruit=N.recruit,N.survive=N.survive,z=z,s=s)
-
+  
   #mark/telemetry data
   #deploy collars to individuals captured in marking process
   mark.caps <- 1*apply(y.mark,c(1,2),sum)
@@ -274,10 +274,12 @@ sim.JS.SMR.Dcov.Generalized.Interspersed <- function(D.beta0=NA,D.beta1=NA,D.cov
   mark.states <- array(0,dim=c(N.super,n.primary,K.sight.max))
   for(i in 1:N.super){
     for(g in 1:n.primary){
-      if(z[i,g]==1&mark.states2D[i,g]==1&!is.na(mark.start.global[i,g])){
-        for(k in 1:K.sight[g]){
-          if(mark.start.global[i,g]==0||sightocc[[g]][k]>mark.start.global[i,g]){
-            mark.states[i,g,k] <- 1
+      if(K.sight[g]>0){
+        if(z[i,g]==1&mark.states2D[i,g]==1&!is.na(mark.start.global[i,g])){
+          for(k in 1:K.sight[g]){
+            if(mark.start.global[i,g]==0||sightocc[[g]][k]>mark.start.global[i,g]){
+              mark.states[i,g,k] <- 1
+            }
           }
         }
       }
