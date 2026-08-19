@@ -18,9 +18,11 @@ See here for the marginal version for open populations:
 
 https://github.com/benaug/Spatial-Mark-Resight-Open-Marginal
 
-I would use the marginal version unless there is overdispersion in the resighting counts. The marginal approach mixes better but
-only works with a Poisson observation model. The mixing for the conditional version can be what you might call "terrible" in many
-scenarios, so it may or may not be workable for any given data set, particularly when there is more posterior uncertainty.
+I would use the marginal version unless there is overdispersion in the resighting counts that can't be accommodated with trap level random effects.
+The marginal approach mixes better but only works with a Poisson observation model. The mixing for the conditional version can be what you might call "terrible" in many
+scenarios, so it may or may not be workable for any given data set, particularly when there is more posterior uncertainty. Further,
+I believe the conditional approach is not always able to fully explore the posterior and may produce somewhat biased estimates for
+some data sets. I need to write a joint z-ID update to remedy this. 
 
 There are 4 model versions with stationary activity centers--Poisson and negative binomial observation models and versions with and without interspersed
 marking and sighting within years. There are 2 versions with RSF-based mobile activity centers--Poisson and negative binomial
