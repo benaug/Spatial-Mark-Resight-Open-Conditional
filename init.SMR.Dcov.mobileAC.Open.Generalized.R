@@ -83,11 +83,6 @@ init.SMR.Dcov.mobileAC.Open.Generalized <- function(data,inits=NA,M=NA,obsmod=NA
   }
   
   #initialize known/captured/telemetry ACs using known evidence before latent allocation
-  # has.mark <- apply(y.mark[1:n.cap.all,,],1,sum)>0
-  # has.mID <- rep(FALSE,n.cap.all)
-  # has.mID[1:n.marked.all] <- rowSums(y.mID)>0
-  # has.tel <- (1:n.cap.all)%in%data$tel.ID
-  # idx <- which(has.mark|has.mID|has.tel)
 
   #build conditional sighting histories
   y.sight <- array(0,dim=c(M,n.primary,J.sight.max))
